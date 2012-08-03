@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="asmlibrary : " />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>asmlibrary</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/trimpsyw/asmlibrary">View on GitHub</a>
+
+          <h1 id="project_title">asmlibrary</h1>
+          <h2 id="project_tagline"></h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/trimpsyw/asmlibrary/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/trimpsyw/asmlibrary/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>Overview</h1>
+
+<p>Active Shape Model Library (ASMLibrary©) SDK, which is is developped under OpenCV for face alignment and face tracking. </p>
+
+<p>The asmlibrary implements: </p>
+
+<ul>
+<li>Static image alignment with one person or multiple persons </li>
+<li>Dynamic face tracking with only one person </li>
+</ul><p>When you build ASM model, you must have an image database associated with its annotation files. ASMlibrary supports asf and pts format. For pts, you can refer to <a href="http://personalpages.manchester.ac.uk/staff/timothy.f.cootes/tfc_software.html">BioId、XM2VTS、FGNet</a> databases annotated by Time Cootes. For asf, please refer to <a href="http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=922">IMM</a> database annotated by Mikkel Stegmann. </p>
+
+<p>Generally speaking, The database should contain at least several hundreds images. </p>
+
+<h1>A Quick Tutorial</h1>
+
+<h3>Build active shape models</h3>
+
+<p>Usage: build [options] train_path image_ext point_ext cascade_name model_file    </p>
+
+<ul>
+<li>options:
+
+<ul>
+<li>-i   interpolate or not (default 0)<br>
+</li>
+<li>-l   profile length of half side (default 8)</li>
+<li>-p   level of parymid (default 3)</li>
+<li>-t   percentage of shape PCA (default 0.975)</li>
+<li>-T   type of sampling profile (default PROFILE_1D, not implemented otherwise)</li>
+</ul>
+</li>
+<li>train_path    the traingset path which contains some pairs of images and annotations</li>
+<li>image_ext     image format, support jpg, png, bmp, etc.</li>
+<li>point_ext     point format, support asf, pts</li>
+<li>cascade_name  the opencv face detect xml file</li>
+<li>model_file      the output mode file</li>
+</ul><p>Examples:</p>
+
+<p>1.Build asmmodel from 240-images of imm-database which you can download from Stagmman's homepage.    </p>
+
+<blockquote>
+<p>build -i 0 -p 3 -l 8 -t 0.98 ../immdatabase bmp asf haarcascade_frontalface_alt2.xml aamapi.amf</p>
+</blockquote>
+
+<p>2.Build asmmodel from FRANCK-database which you can download from Cootes's homepage.    </p>
+
+<blockquote>
+<p>build -i 1 -p 4 -l 8 ../franck jpg pts haarcascade_frontalface_alt2.xml franck.amf        </p>
+</blockquote>
+
+<h3>Fit using active shape models</h3>
+
+<p>Usage: fit -m model_file -h cascade_file {-i image_file | -v video_file | -c camara_idx} -n n_iteration</p>
+
+<p>Examples:</p>
+
+<p>1.Image alignment on an image using 30 iterations</p>
+
+<blockquote>
+<p>fit -m my.amf -h haarcascade_frontalface_alt2.xml -i aa.jpg -n 30</p>
+</blockquote>
+
+<p>2.Face tracking on a video file</p>
+
+<blockquote>
+<p>fit -m my.amf -h haarcascade_frontalface_alt2.xml -v bb.avi -n 25</p>
+</blockquote>
+
+<p>3.Face tracking on live camara</p>
+
+<blockquote>
+<p>fit -m my.amf -h haarcascade_frontalface_alt2.xml -c 0</p>
+</blockquote>
+
+<h1>Question</h1>
+
+<p>Anyone who has the problem can goto the group <a href="http://groups.google.com/group/asmlibrary">http://groups.google.com/group/asmlibrary</a> and let your question there. </p>
+
+<h1>Donate</h1>
+
+<p>If you like the library, please <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=CS9NXZETE7X4L">Donate via PayPal</a>. </p>
+
+<h1>使用说明</h1>
+
+<p>ASMLibrary包括离线训练模型和在线实时匹配两大部分。 </p>
+
+<p>训练模型之前，确保你拥有一个图像数据库以及对应于该图像数据库的标定文件库。所谓的图像标定指对图像进行点的标定，指示了相关特征点的具体坐标位置，支持的文件格式有pts和asf，pts的示例可以参看Time Cootes对<a href="http://personalpages.manchester.ac.uk/staff/timothy.f.cootes/tfc_software.html">BioId、XM2VTS、FGNet</a>等数据库的标定；asf的示例可以参看Mikkel Stegmann对<a href="http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=922">IMM</a>图像库进行的标定。 一般而言，标定图像数据库的规模在几百张就可以了。 </p>
+
+<p>当模型训练完毕之后，可以对任意图像进行人脸对齐，或者对视频文件或者摄像头进行特征点跟踪。 </p>
+
+<p><strong>如果你认可ASMLibrary库，支持ASMLibrary的继续更新和改进，欢迎你以自愿捐助方式进行捐助。</strong> 捐助链接设置在<a href="https://me.alipay.com/asmlibrary">支付宝</a>或者<a href="http://item.taobao.com/item.htm?spm=a1z09.5.0.38&amp;id=15195844967">淘宝</a>。 </p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">asmlibrary maintained by <a href="https://github.com/trimpsyw">trimpsyw</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
