@@ -46,6 +46,10 @@ Nanjing University</EM>, Feb 2009. \url http://code.google.com/p/asmlibrary
 
 using namespace std;
 
+#ifdef WIN32
+#define HAS_GSTREAMER
+#endif
+
 static void print_version()
 {
 	printf("\n\n"
@@ -64,6 +68,12 @@ static void usage_fit()
 	exit(0);
 }
 
+
+static void DrawResult(IplImage* image, const asm_shape& shape)
+{
+	for(int j = 0; j < shape.NPoints(); j++)
+		cvCircle(image, cvPoint(shape[j].x, shape[j].y), 2, CV_RGB(255, 0, 0));
+}
 
 int main(int argc, char *argv[])
 {
@@ -131,16 +141,23 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	double t = (double)cvGetTickCount();
 	if(fit_asm.Read(model_name) == false)
 		return -1;
+	t = ((double)cvGetTickCount() -  t )/  (cvGetTickFrequency()*1000.);
+	printf("ASM model file read time cost: %.2f millisec\n", t);
 	
+	t = (double)cvGetTickCount();
 	if(init_detect_cascade(cascade_name) == false)
 		return -1;
+	t = ((double)cvGetTickCount() -  t )/  (cvGetTickFrequency()*1000.);
+	printf("Opencv haar-like file read time cost: %.2f millisec\n", t);
 	
 	// case 1: process video, here we assume that the video contains only one face,
 	// if not, we process with the most central face
 	if(image_or_video == 'v')
 	{
+#ifdef HAS_GSTREAMER
 		int frame_count;
 		asm_shape shape, detshape;
 		bool flag = false;
@@ -178,7 +195,7 @@ int main(int argc, char *argv[])
 			flag = fit_asm.ASMSeqSearch(shape, image, j, true, n_iteration);
 			
 			//If success, we draw and show its result
-			if(flag) fit_asm.Draw(image, shape);
+			if(flag) DrawResult(image, shape);
 show:
 			cvShowImage("ASM-Search", image);
 			cvWaitKey(1);
@@ -188,6 +205,7 @@ show:
 		}
 
 		close_video();
+#endif
 	}
 	// case 2: process image, we can process multi-person image alignment
 	// also you can process single face alignment by coding like this
@@ -214,6 +232,8 @@ show:
 		
 		// step 1: detect face
 		bool flag =detect_all_faces(&detshapes, nFaces, image);
+		t = ((double)cvGetTickCount() -  t )/  (cvGetTickFrequency()*1000.);
+		printf("Opencv face detect time cost: %.2f millisec\n", t);
 		
 		// step 2: initialize shape from detect box
 		if(flag)
@@ -231,15 +251,15 @@ show:
 		}
 		
 		// step 3: image alignment fitting
+		t = (double)cvGetTickCount();
 		fit_asm.Fitting2(shapes, nFaces, image, n_iteration);
-		
 		t = ((double)cvGetTickCount() -  t )/  (cvGetTickFrequency()*1000.);
-			printf("ASM fitting time cost: %.2f millisec\n", t);
-			
+		printf("ASM fitting time cost: %.2f millisec\n", t);
+					
 		// step 4: draw and show result in GUI
 		for(int i = 0; i < nFaces; i++)
 		{
-			fit_asm.Draw(image, shapes[i]);
+			DrawResult(image, shapes[i]);
 		}
 		
 		cvSaveImage("result.jpg", image);
@@ -255,6 +275,7 @@ show:
 	// case 3: process camera
 	else if(use_camera)
 	{
+#ifdef HAS_GSTREAMER
 		asm_shape shape, detshape;
 		bool flag = false;
 		IplImage* image; 
@@ -292,13 +313,14 @@ show:
 			flag = fit_asm.ASMSeqSearch(shape, image, j, true, n_iteration);
 			
 			//If success, we draw and show its result
-			if(flag) fit_asm.Draw(image, shape);
+			if(flag) DrawResult(image, shape);
 show2:
 			cvShowImage("ASM-Search", image);
 			cvWaitKey(1);
 		}
 
 		close_camera();
+#endif
 	}
 
     return 0;
