@@ -1,1 +1,5 @@
+2013-07-29
+  add linux library, and the library only supports fitting. For building models, please goto Windows platform.
+2012-08-01
 The asmlibrray 6.0 can support the opencv 1.0 or later in the environment of Microft Visual Studio.
+

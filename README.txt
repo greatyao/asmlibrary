@@ -9,7 +9,7 @@
 ===================
 Dependencies
 ===================
-	-- opencv (1.0 or later for VC)
+	-- opencv (1.0 or later for VC/Linux)
  
 ===================
 How to build your program
@@ -17,6 +17,9 @@ How to build your program
 
 1. Windows
 Open src/build.dsw(sln) and src/fit.dsw(sln) under the enviroment of Microsoft VS.
+
+2. Linux
+Goto linux directory and type make command.
 
 ================
 A Quick Tutorial
@@ -52,7 +55,8 @@ To get farmiliarised quickly with the library, execute the following steps:
     > build -i 1 -p 4 -l 8 ../franck jpg pts haarcascade_frontalface_alt2.xml franck.amf		
 
  Notice: the file format of shape data are borrowed from Cootes and Stagmman, and you can generate your 
- pts file by using Cootes's am_tools and asf file by using Stagmman's aam-api. 
+ pts file by using Cootes's am_tools and asf file by using Stagmman's aam-api.
+ Notice: Linux library doesn't support building asm models.
 
 2. Fit using active shape models
 
