@@ -2,7 +2,6 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-
 #include "asmfitting.h"
 #include "vjfacedetect.h"
 
@@ -17,6 +16,10 @@ using namespace cv;
 
 #define LOG_TAG "ASMLIBRARY"
 #define LOGD(...) ((void)__android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__))
+
+#define BEGINT()	double t = (double)cvGetTickCount();
+#define ENDT(exp)	t = ((double)cvGetTickCount() -  t )/  (cvGetTickFrequency()*1000.);	\
+					LOGD(exp " time cost: %.2f millisec\n", t);
 
 asmfitting fit_asm;
 
@@ -44,21 +47,31 @@ JNIEXPORT jboolean JNICALL Java_org_asmlibrary_fit_ASMFit_nativeReadModel
         jenv->ThrowNew(je, "Unknown exception in JNI code");
     }
 
-    LOGD("nativeReadModel exit");
+    LOGD("nativeReadModel %s exit %d", filename, result);
     return result;
 }
 
 JNIEXPORT jboolean JNICALL Java_org_asmlibrary_fit_ASMFit_nativeInitCascadeDetector
 (JNIEnv * jenv, jclass, jstring jFileName)
 {
-    LOGD("nativeInitCascadeDetector enter");
     const char* cascade_name = jenv->GetStringUTFChars(jFileName, NULL);
+    LOGD("nativeInitCascadeDetector %s enter", cascade_name);
 
     if(init_detect_cascade(cascade_name) == false)
 		return false;
 
     LOGD("nativeInitCascadeDetector exit");
     return true;
+}
+
+JNIEXPORT void JNICALL Java_org_asmlibrary_fit_ASMFit_nativeDestroyCascadeDetector
+(JNIEnv * jenv, jclass)
+{
+    LOGD("nativeDestroyCascadeDetector enter");
+
+    destory_detect_cascade();
+
+    LOGD("nativeDestroyCascadeDetector exit");
 }
 
 inline void shape_to_Mat(asm_shape shapes[], int nShape, Mat& mat)
@@ -93,41 +106,56 @@ inline void Mat_to_shape(asm_shape shapes[], Mat& mat)
 JNIEXPORT jboolean JNICALL Java_org_asmlibrary_fit_ASMFit_nativeDetectAll
 (JNIEnv * jenv, jclass, jlong imageGray, jlong faces)
 {
-    	LOGD("nativeDetectAll enter");
+	LOGD("nativeDetectAll enter");
  
-    	IplImage image = *(Mat*)imageGray;
+    IplImage image = *(Mat*)imageGray;
 	int nFaces;
 	asm_shape *detshapes = NULL;
+
+	BEGINT();
+
 	bool flag =detect_all_faces(&detshapes, nFaces, &image);
 	if(flag == false)	return false;
 
-	shape_to_Mat(detshapes, nFaces, *((Mat*)faces));
-	free_shape_memeory(&detshapes);	
-
-	LOGD("nativeDetect exit");
-	return true;
-}
-
-JNIEXPORT void JNICALL Java_org_asmlibrary_fit_ASMFit_nativeInitShape
-(JNIEnv * jenv, jclass, jlong shapes0)
-{
-	Mat shapes1 = *(Mat*)shapes0;
-	int nFaces = shapes1.rows;
-	if(nFaces <= 0)	return;
-
-	asm_shape* detshapes = new asm_shape[nFaces];
+	LOGD("nativeDetectAll found %d faces", nFaces);
 	asm_shape* shapes = new asm_shape[nFaces];
-
-	Mat_to_shape(detshapes, shapes1);
-	
 	for(int i = 0; i < nFaces; i++)
 	{
 		InitShapeFromDetBox(shapes[i], detshapes[i], fit_asm.GetMappingDetShape(), fit_asm.GetMeanFaceWidth());
 	}
 
-	shape_to_Mat(shapes, nFaces, shapes1);
+	shape_to_Mat(shapes, nFaces, *((Mat*)faces));
+	free_shape_memeory(&detshapes);	
 	delete []shapes;
-	delete []detshapes;
+	
+	ENDT("Haar-like cascade detect");
+
+	LOGD("nativeDetectAll exit");
+	return true;
+}
+
+JNIEXPORT jboolean JNICALL Java_org_asmlibrary_fit_ASMFit_nativeDetectOne
+(JNIEnv * jenv, jclass, jlong imageGray, jlong faces)
+{
+	LOGD("nativeDetectOne enter");
+ 
+	IplImage image = *(Mat*)imageGray;
+	asm_shape shape, detshape;
+	
+	BEGINT();
+
+	bool flag = detect_one_face(detshape, &image);
+
+	if(flag == false)	return false;
+
+	InitShapeFromDetBox(shape, detshape, fit_asm.GetMappingDetShape(), fit_asm.GetMeanFaceWidth());
+
+	shape_to_Mat(&shape, 1, *((Mat*)faces));
+	
+	ENDT("Haar-like cascade detect");
+
+	LOGD("nativeDetectOne exit");
+	return true;
 }
 
 
@@ -139,11 +167,19 @@ JNIEXPORT void JNICALL Java_org_asmlibrary_fit_ASMFit_nativeFitting
 	int nFaces = shapes1.rows;	
 	asm_shape* shapes = new asm_shape[nFaces];
 	
+	BEGINT();
+
 	Mat_to_shape(shapes, shapes1);
 
 	fit_asm.Fitting2(shapes, nFaces, &image);
 
-	shape_to_Mat(shapes, nFaces, shapes1);
+	shape_to_Mat(shapes, nFaces, *((Mat*)shapes0));
+
+	ENDT("nativeFitting");
+
+	//for(int i = 0; i < shapes[0].NPoints(); i++)
+	//	LOGD("points: (%f, %f)", shapes[0][i].x, shapes[0][i].y);
+
 	delete []shapes;
 }
 
@@ -152,14 +188,21 @@ JNIEXPORT jboolean JNICALL Java_org_asmlibrary_fit_ASMFit_nativeVideoFitting
 {
 	IplImage image = *(Mat*)imageGray;
 	Mat shapes1 = *(Mat*)shapes0;	
-	assert(shapes1.rows == 1);
-	asm_shape shape;
+	bool flag = false;
+	if(shapes1.rows == 1)
+	{
+		asm_shape shape;
 	
-	Mat_to_shape(&shape, shapes1);
+		BEGINT();
 
-	bool flag = fit_asm.ASMSeqSearch(shape, &image, frame, true);
+		Mat_to_shape(&shape, shapes1);
 
-	shape_to_Mat(&shape, 1, shapes1);
+		flag = fit_asm.ASMSeqSearch(shape, &image, frame, true);
+
+		shape_to_Mat(&shape, 1, *((Mat*)shapes0));
+
+		ENDT("nativeVideoFitting");
+	}
 
 	return flag;
 }
