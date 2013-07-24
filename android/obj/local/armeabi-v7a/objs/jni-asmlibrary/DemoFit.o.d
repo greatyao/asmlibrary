@@ -44,6 +44,9 @@ obj/local/armeabi-v7a/objs/jni-asmlibrary/DemoFit.o: jni/DemoFit.cpp \
  /media/work/Develop/opencv/OpenCV-2.4.6-android-sdk/sdk/native/jni/include/opencv2/core/core_c.h \
  /media/work/Develop/opencv/OpenCV-2.4.6-android-sdk/sdk/native/jni/include/opencv2/highgui/highgui.hpp \
  /media/work/Develop/opencv/OpenCV-2.4.6-android-sdk/sdk/native/jni/include/opencv2/highgui/highgui_c.h \
+ /media/work/Develop/opencv/OpenCV-2.4.6-android-sdk/sdk/native/jni/include/opencv2/contrib/detection_based_tracker.hpp \
+ /media/work/Develop/opencv/OpenCV-2.4.6-android-sdk/sdk/native/jni/include/opencv2/objdetect/objdetect.hpp \
+ /media/work/Develop/NVPACK/android-ndk-r8/sources/cxx-stl/gnu-libstdc++/include/deque \
  jni/asmfitting.h jni/asmlibrary.h jni/vjfacedetect.h \
  /media/work/Develop/NVPACK/android-ndk-r8/platforms/android-8/arch-arm/usr/include/android/log.h \
  /media/work/Develop/NVPACK/android-ndk-r8/platforms/android-8/arch-arm/usr/include/jni.h
@@ -137,6 +140,12 @@ obj/local/armeabi-v7a/objs/jni-asmlibrary/DemoFit.o: jni/DemoFit.cpp \
 /media/work/Develop/opencv/OpenCV-2.4.6-android-sdk/sdk/native/jni/include/opencv2/highgui/highgui.hpp:
 
 /media/work/Develop/opencv/OpenCV-2.4.6-android-sdk/sdk/native/jni/include/opencv2/highgui/highgui_c.h:
+
+/media/work/Develop/opencv/OpenCV-2.4.6-android-sdk/sdk/native/jni/include/opencv2/contrib/detection_based_tracker.hpp:
+
+/media/work/Develop/opencv/OpenCV-2.4.6-android-sdk/sdk/native/jni/include/opencv2/objdetect/objdetect.hpp:
+
+/media/work/Develop/NVPACK/android-ndk-r8/sources/cxx-stl/gnu-libstdc++/include/deque:
 
 jni/asmfitting.h:
 
