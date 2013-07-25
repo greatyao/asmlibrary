@@ -67,7 +67,7 @@ bool detect_all_faces(asm_shape** Shapes, int& n_shapes, const IplImage* image)
 	cvPyrDown(image, pWork, CV_GAUSSIAN_5x5 );
 		
 	CvSeq* pFaces = cvHaarDetectObjects(pWork, __cascade, __storage,
-		1.1, 3, CV_HAAR_DO_CANNY_PRUNING);
+		1.1, 3, CV_HAAR_DO_CANNY_PRUNING, cvSize(30, 30));
 
 	cvReleaseImage(&pWork);
 	
