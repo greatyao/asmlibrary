@@ -27,6 +27,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
+import android.content.res.Configuration;
 
 public class ASMLibraryActivity extends Activity implements CvCameraViewListener2{
     
@@ -34,18 +35,23 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     
     private Mat                    	mRgba;
     private Mat                    	mGray;
+    private Mat                    	mGray2;
     private File                   	mCascadeFile;
     private File                   	mFastCascadeFile;
     private File                   	mModelFile;
     private ASMFit      		   	mASMFit;
     private long				   	mFrame;
     private boolean					mFlag;
+    private boolean					mPortrait = true;
     private boolean					mFastDetect = false;
     private Mat						mShape;
     private static final Scalar 	mColor = new Scalar(255, 0, 0);
     private MenuItem               	mHelpItem;
     private MenuItem               	mDetectItem;
+    private MenuItem               	mOrieItem;
+    private MenuItem				mCameraitem;
     private CameraBridgeViewBase   	mOpenCvCameraView;
+    private int 					mCameraIndex = CameraBridgeViewBase.CAMERA_ID_ANY;
     
     public ASMLibraryActivity() {
         Log.i(TAG, "Instantiated new " + this.getClass());
@@ -142,8 +148,6 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
         }
     };
 
-
-
 	/** Called when the activity is first created. */
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -178,7 +182,9 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        Log.i(TAG, "called onCreateOptionsMenu");
+        Log.i(TAG, "called onCreateOptionsMenu"+mFastDetect);
+        mCameraitem = menu.add("Toggle Front/Back");
+        mOrieItem = menu.add("Toggle Portrait");
         if(mFastDetect == true)
         	mDetectItem = menu.add("CascadeDetector");
         else
@@ -198,10 +204,20 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
         				.setPositiveButton("OK", null).show();
         else if(item == mDetectItem)
         {
-        	if(mFastDetect == false)
-        		mFastDetect = true;
+        	mFastDetect = !mFastDetect;
+        }
+        else if(item == mOrieItem)
+        {
+        	mPortrait = !mPortrait;
+        }
+        else if(item == mCameraitem)
+        {
+        	if(mCameraIndex == CameraBridgeViewBase.CAMERA_ID_ANY ||
+        			mCameraIndex == CameraBridgeViewBase.CAMERA_ID_BACK)
+        		mCameraIndex = CameraBridgeViewBase.CAMERA_ID_FRONT;
         	else
-        		mFastDetect = false;
+        		mCameraIndex = CameraBridgeViewBase.CAMERA_ID_BACK;
+        	mOpenCvCameraView.setCameraIndex(mCameraIndex);
         }
         return true;
     }
@@ -214,6 +230,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
 
     public void onCameraViewStarted(int width, int height) {
         mGray = new Mat();
+        mGray2 = new Mat();
         mRgba = new Mat();
         mShape = new Mat();
         mFrame = 0;
@@ -229,25 +246,54 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
 
         mRgba = inputFrame.rgba();
         mGray = inputFrame.gray();
+        
+        if(mPortrait ==true) 
+        	Core.transpose(mGray, mGray2);
+        else
+        	mGray2 = mGray;
+        
+        //WindowManager manager = getWindowManager();
+        //int width = manager.getDefaultDisplay().getWidth();
+        //int height = manager.getDefaultDisplay().getHeight();
+        //Log.d(TAG, "屏幕大小" + width + "x" + height);
 
         if(mFrame == 0 || mFlag == false)
 		{
         	Mat detShape = new Mat();
 			if(mFastDetect)
-				mFlag = mASMFit.fastDetectAll(mGray, detShape);
+				mFlag = mASMFit.fastDetectAll(mGray2, detShape);
 			else
-				mFlag = mASMFit.detectAll(mGray, detShape);
+				mFlag = mASMFit.detectAll(mGray2, detShape);
 			if(mFlag)	mShape = detShape.row(0);
 		}
 			
 		if(mFlag) 
 		{
-			mFlag = mASMFit.videoFitting(mGray, mShape, mFrame);
-			
-			for(int i = 0; i < mShape.row(0).cols()/2; i++)
-			{ 
-				Point pt = new Point(mShape.get(0, 2*i)[0], mShape.get(0, 2*i+1)[0]);
-				Core.circle(mRgba, pt, 3, mColor);
+			mFlag = mASMFit.videoFitting(mGray2, mShape, mFrame);
+		}
+		
+		if(mFlag)
+		{
+			if(mPortrait == true)
+			{
+				int nPoints = mShape.row(0).cols()/2;
+				for(int i = 0; i < nPoints; i++)
+				{ 
+					double x = mShape.get(0, 2*i)[0];
+					double y = mShape.get(0, 2*i+1)[0];
+					Point pt = new Point(y, x);
+					
+					Core.circle(mRgba, pt, 3, mColor);
+				}
+			}
+			else
+			{
+				int nPoints = mShape.row(0).cols()/2;
+				for(int i = 0; i < nPoints; i++)
+				{ 
+					Point pt = new Point(mShape.get(0, 2*i)[0], mShape.get(0, 2*i+1)[0]);
+					Core.circle(mRgba, pt, 3, mColor);
+				}
 			}
 		}
 		
