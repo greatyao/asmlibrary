@@ -90,6 +90,9 @@ IplImage* read_from_video(int frame_no )
 		v_capimg = cvQueryFrame(v_capture );
 	}
 	
+	if(v_capimg == 0)
+		return 0;
+	
 	if(v_capimg->origin == 0)
 		cvCopy(v_capimg, v_image);
 	else
@@ -121,6 +124,8 @@ void close_camera()
 IplImage* read_from_camera()
 {
 	c_capimg = cvQueryFrame(c_capture );
+	if(c_capimg == 0)
+		return 0;
 	
 	if(c_capimg->origin == 0)
 		cvCopy(c_capimg, c_image);
