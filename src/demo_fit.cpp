@@ -177,6 +177,7 @@ int main(int argc, char *argv[])
 			printf("Tracking frame %04i: ", j);
 			
 			image = read_from_video(j);
+			if(image == NULL) continue;
 			
 			if(j == 0 || flag == false)
 			{
@@ -293,6 +294,7 @@ show:
 		{
 			// NOTE: when the parameter is set 1, we can read from camera
 			image = read_from_camera();
+			if(image == NULL) continue;
 			
 			if(flag == false)
 			{
