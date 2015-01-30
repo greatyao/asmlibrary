@@ -9,7 +9,7 @@
 ===================
 Dependencies
 ===================
-	-- opencv (1.0 or later for VC/Linux)
+	-- opencv (1.0 or later for Windows/Linux/MacOSX/Android)
  
 ===================
 How to build your program
@@ -18,8 +18,8 @@ How to build your program
 1. Windows
 Open src/build.dsw(sln) and src/fit.dsw(sln) under the enviroment of Microsoft VS.
 
-2. Linux
-Goto linux directory and type make command.
+2. Linux/MacOSX
+Goto linux/macosx directory and type make command.
 
 ================
 A Quick Tutorial
