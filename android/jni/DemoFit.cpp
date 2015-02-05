@@ -283,7 +283,7 @@ JNIEXPORT jboolean JNICALL Java_org_asmlibrary_fit_ASMFit_nativeDetectOne
 
 
 JNIEXPORT void JNICALL Java_org_asmlibrary_fit_ASMFit_nativeFitting
-(JNIEnv * jenv, jclass, jlong imageGray, jlong shapes0)
+(JNIEnv * jenv, jclass, jlong imageGray, jlong shapes0, jlong n_iteration)
 {
 	IplImage image = *(Mat*)imageGray;
 	Mat shapes1 = *(Mat*)shapes0;	
@@ -294,7 +294,7 @@ JNIEXPORT void JNICALL Java_org_asmlibrary_fit_ASMFit_nativeFitting
 
 	Mat_to_shape(shapes, nFaces, shapes1);
 
-	fit_asm.Fitting2(shapes, nFaces, &image);
+	fit_asm.Fitting2(shapes, nFaces, &image, n_iteration);
 
 	shape_to_Mat(shapes, nFaces, *((Mat*)shapes0));
 
@@ -307,7 +307,7 @@ JNIEXPORT void JNICALL Java_org_asmlibrary_fit_ASMFit_nativeFitting
 }
 
 JNIEXPORT jboolean JNICALL Java_org_asmlibrary_fit_ASMFit_nativeVideoFitting
-(JNIEnv * jenv, jclass, jlong imageGray, jlong shapes0, jlong frame)
+(JNIEnv * jenv, jclass, jlong imageGray, jlong shapes0, jlong frame, jlong n_iteration)
 {
 	IplImage image = *(Mat*)imageGray;
 	Mat shapes1 = *(Mat*)shapes0;	
@@ -316,12 +316,11 @@ JNIEXPORT jboolean JNICALL Java_org_asmlibrary_fit_ASMFit_nativeVideoFitting
 	{
 		asm_shape shape;
 	
-		LOGD("nativeVideoFitting %d x %d", image.width, image.height);
 		BEGINT();
 
 		Mat_to_shape(&shape, 1, shapes1);
 
-		flag = fit_asm.ASMSeqSearch(shape, &image, frame, true);
+		flag = fit_asm.ASMSeqSearch(shape, &image, frame, false, n_iteration);
 
 		shape_to_Mat(&shape, 1, *((Mat*)shapes0));
 

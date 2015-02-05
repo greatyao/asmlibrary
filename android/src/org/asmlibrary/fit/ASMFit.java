@@ -1,11 +1,15 @@
 package org.asmlibrary.fit;
 
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfRect;
-
-import android.util.Log;
 
 public class ASMFit {
+	
+	static{  
+		// Load native library after(!) OpenCV initialization
+        System.loadLibrary("asmlibrary");
+        System.loadLibrary("jni-asmlibrary");
+		}  
+
 	
 	public ASMFit(){}
 	
@@ -42,14 +46,14 @@ public class ASMFit {
 				face.getNativeObjAddr());
 	}
 	
-	public void fitting(Mat imageGray, Mat shapes){
+	public void fitting(Mat imageGray, Mat shapes, long n_iteration){
 		nativeFitting(imageGray.getNativeObjAddr(), 
-				shapes.getNativeObjAddr());
+				shapes.getNativeObjAddr(), n_iteration);
 	}
 	
-	public boolean videoFitting(Mat imageGray, Mat shape, long frame){
+	public boolean videoFitting(Mat imageGray, Mat shape, long frame, long n_iteration){
 		return nativeVideoFitting(imageGray.getNativeObjAddr(),
-				shape.getNativeObjAddr(), frame);
+				shape.getNativeObjAddr(), frame, n_iteration);
 	}
 	
 	public static native boolean nativeReadModel(String modelName);
@@ -74,7 +78,7 @@ public class ASMFit {
 	private static native boolean nativeDetectOne(long inputImage, long face);
 	private static native boolean nativeFastDetectAll(long inputImage, long faces);
 	
-	private static native void nativeFitting(long inputImage, long shapes);
-	private static native boolean nativeVideoFitting(long inputImage, long shape, long frame);
+	private static native void nativeFitting(long inputImage, long shapes, long n_iteration);
+	private static native boolean nativeVideoFitting(long inputImage, long shape, long frame, long n_iteration);
 
 }
