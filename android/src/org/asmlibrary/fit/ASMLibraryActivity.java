@@ -345,7 +345,10 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
 		if(mFlag) 
 		{
 			mFlag = mASMFit.videoFitting(mGray, mShape, mFrame, 25);
-			
+		}
+		
+		if(mFlag)
+		{
 			int nPoints = mShape.row(0).cols()/2;
 			for(int i = 0; i < nPoints; i++)
 			{ 
