@@ -48,7 +48,6 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     private File                   	mCascadeFile;
     private File                   	mFastCascadeFile;
     private File                   	mModelFile;
-    private ASMFit      		   	mASMFit;
     private int						m_NumberOfCameras = 0;
     private long				   	mFrame;
     private boolean					mFlag;
@@ -56,7 +55,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     private int						mCameraIdx = 0;
     private Mat						mShape;
     private static final Scalar 	mRedColor = new Scalar(255, 0, 0);
-    private static final Scalar 	mGreenColor = new Scalar(0, 255, 0);
+    private static final Scalar 	mCyanColor = new Scalar(0, 255, 255);
     private MenuItem               	mHelpItem;
     private MenuItem               	mDetectItem;
     private MenuItem				mCameraitem;
@@ -98,17 +97,15 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     
     private void initialize()
     {
-    	mASMFit = new ASMFit();
-
         mModelFile = getSourceFile(R.raw.my68_1d, "my68_1d.amf", "model");
         if(mModelFile != null)
-        	mASMFit.nativeReadModel(mModelFile.getAbsolutePath());   
+        	ASMFit.nativeReadModel(mModelFile.getAbsolutePath());   
         
         mCascadeFile = getSourceFile(R.raw.haarcascade_frontalface_alt2, 
         		"haarcascade_frontalface_alt2.xml", "cascade");
         if(mCascadeFile != null)
         {
-        	mASMFit.nativeInitCascadeDetector(mCascadeFile.getAbsolutePath());
+        	ASMFit.nativeInitCascadeDetector(mCascadeFile.getAbsolutePath());
         	mJavaCascade = new CascadeClassifier(mCascadeFile.getAbsolutePath());
         	if (mJavaCascade.empty())
                 mJavaCascade = null;
@@ -117,7 +114,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
         mFastCascadeFile = getSourceFile(R.raw.lbpcascade_frontalface, 
         		"lbpcascade_frontalface.xml", "cascade");
         if(mFastCascadeFile != null)
-        	mASMFit.nativeInitFastCascadeDetector(mFastCascadeFile.getAbsolutePath());
+        	ASMFit.nativeInitFastCascadeDetector(mFastCascadeFile.getAbsolutePath());
         
         mCascadeFile.delete();
         mFastCascadeFile.delete();
@@ -129,8 +126,8 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     	Mat image = Highgui.imread(JPGFile.getAbsolutePath(), Highgui.IMREAD_GRAYSCALE);
         Mat shapes = new Mat();
         
-        if(mASMFit.detectAll(image, shapes) == true)
-			mASMFit.fitting(image, shapes, 30);
+        if(ASMFit.detectAll(image, shapes) == true)
+        	ASMFit.fitting(image, shapes, 30);
 
         mOpenCvCameraView.enableView();
         
@@ -305,7 +302,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
         	Mat detShape = new Mat();
         	int iFaceIndex = 0;
         	if(mFastDetect || mJavaCascade == null)
-				mFlag = mASMFit.fastDetectAll(mGray, detShape);
+				mFlag = ASMFit.fastDetectAll(mGray, detShape);
 			else
 			{
 				int height = mGray.rows();
@@ -336,7 +333,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
                         }
                 	}
                 
-                	mASMFit.nativeInitShape(detShape.getNativeObjAddr());
+                	ASMFit.initShape(detShape);
                 }
 			}
 			if(mFlag)	mShape = detShape.row(iFaceIndex);
@@ -344,7 +341,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
 			
 		if(mFlag) 
 		{
-			mFlag = mASMFit.videoFitting(mGray, mShape, mFrame, 25);
+			mFlag = ASMFit.videoFitting(mGray, mShape, mFrame, 25);
 		}
 		
 		if(mFlag)
@@ -356,7 +353,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
 				double y = mShape.get(0, 2*i+1)[0];
 				Point pt = new Point(x, y);
 				
-				Core.circle(mRgba, pt, 3, mGreenColor);
+				Core.circle(mRgba, pt, 3, mCyanColor, 2);
 			}
 		}
 		
@@ -364,7 +361,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     	String string = String.format("FPS: %2.1f", 1000.0f / (float)(lMilliNow - lMilliStart));
         double dTextScaleFactor = 1.8;
 	    Core.putText(mRgba, string, new Point(10, dTextScaleFactor*60*1), 
-   			 Core.FONT_HERSHEY_SIMPLEX, dTextScaleFactor, mGreenColor, 2);
+   			 Core.FONT_HERSHEY_SIMPLEX, dTextScaleFactor, mCyanColor, 2);
 		
 		mFrame ++;
 		return mRgba;
