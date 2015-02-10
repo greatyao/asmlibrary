@@ -23,5 +23,13 @@
         android:adjustViewBounds="true"
         android:gravity="center_vertical"
         android:id="@+id/java_surface_front_view" />
+    
+    <android.widget.ImageView 
+       android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        android:adjustViewBounds="true"
+        android:gravity="center_vertical"
+        android:id="@+id/image_view" />
 
 </LinearLayout>
