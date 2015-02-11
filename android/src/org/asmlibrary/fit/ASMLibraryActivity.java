@@ -43,6 +43,8 @@ import android.net.Uri;
 import android.database.Cursor;    
 import android.graphics.Bitmap;    
 import android.provider.MediaStore;
+import android.provider.DocumentsContract;
+import android.widget.Toast;
 
 
 public class ASMLibraryActivity extends Activity implements CvCameraViewListener2
@@ -128,14 +130,6 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
         
         mCascadeFile.delete();
         mFastCascadeFile.delete();
-        
-        //test image alignment
-        // load image file from application resources
-    	//File JPGFile = getSourceFile(R.raw.gump, "gump.jpg", "image");
-    	//Mat image = Highgui.imread(JPGFile.getAbsolutePath(), Highgui.IMREAD_GRAYSCALE);
-        //Mat shapes = new Mat();
-        //if(ASMFit.detectAll(image, shapes) == true)
-        //	ASMFit.fitting(image, shapes, 30);
     }
     
     private boolean fittingOnStaticImage(String imgName){
@@ -157,8 +151,12 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
         		}
         	}
         }
+    	else
+    		Toast.makeText(this, "Canot detect any face", Toast.LENGTH_LONG).show();
+
         
     	Bitmap bmp = Bitmap.createBitmap(image.width(), image.height(), Bitmap.Config.ARGB_8888);
+    	Imgproc.cvtColor(image, image, Imgproc.COLOR_RGB2BGR);
     	Utils.matToBitmap(image, bmp, true);
     	mImageView.setImageBitmap(bmp);
     	
@@ -263,8 +261,8 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
+    	mChooseItem = menu.add(mCamera ? "Image Fitting" : "Video Fitting");
         mCameraitem = menu.add(mCameraIdx == 0 ? "Front Camera" : "Back Camera");
-        mChooseItem = menu.add(mCamera ? "Image Fitting" : "Video Fitting");
         mAlbumItem = menu.add("Pick Album");
         mDetectItem = menu.add(mFastDetect ? "JavaCascadeDetector" : "FastCascadeDetector");
         mHelpItem = menu.add("About ASMLibrary");
@@ -298,24 +296,42 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
 	        // try to retrieve the image from the media store first
 	        // this will only work for images selected from gallery
 	        String[] projection = { MediaStore.Images.Media.DATA };
-	        Cursor cursor = managedQuery(uri, projection, null, null, null);
+	        Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
+
+	        String path = null;
 	        if( cursor != null ){
-	            int column_index = cursor
-	            .getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+	            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
 	            cursor.moveToFirst();
-	            fittingOnStaticImage(cursor.getString(column_index));
+	            path = cursor.getString(column_index);
+	            if(path == null){
+	            	cursor.close();
+	            	path = uri.getPath();
+	                String wholeID = DocumentsContract.getDocumentId(uri);
+	                String id = wholeID.split(":")[1];
+	                String[] column = { MediaStore.Images.Media.DATA };
+	                String sel = MediaStore.Images.Media._ID + "=?";
+	                cursor = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+	                        column, sel, new String[] { id }, null);
+	                column_index = cursor.getColumnIndex(column[0]);
+	                if (cursor.moveToFirst()) {
+	                    path = cursor.getString(column_index);
+		            	cursor.close();
+	                }
+	            }
+            	cursor.close();
 	        }
-	        // this is our fallback here
-	        else
-	        	fittingOnStaticImage(uri.getPath());
+	        if(path == null)
+	        	path = uri.getPath();
+	        
+	        fittingOnStaticImage(path);
 	    }
     }
     
     private void chooseImageFromAlbum()
     {
-    	Intent intent = new Intent(Intent.ACTION_PICK);  
+    	Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
     	intent.setType("image/*");
-    	startActivityForResult(intent, SELECT_PICTURE);  
+    	startActivityForResult(Intent.createChooser(intent, "Select Picture"), SELECT_PICTURE);  
     }
 
     
