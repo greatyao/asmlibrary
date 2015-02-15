@@ -163,11 +163,44 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
 
     private String mImageFileName = new String();
     private boolean mFittingDone = false;
+    private Bitmap	mBitmap = null;
+    private int mScaleFactor = 1;
     
     private void fittingOnStaticImageAsyn(String imgName){
     	mImageFileName = imgName;
     	mFittingDone = false;
-    	mImageView.setImageBitmap(BitmapFactory.decodeFile(imgName));
+       	if(mBitmap != null)
+    		mBitmap.recycle();
+    	System.gc();
+    	
+    	int []factors = {1, 2, 4, 8, 16};
+    	BitmapFactory.Options opt = new BitmapFactory.Options();
+    	for(int i = 0; i < factors.length; i++)
+    	{
+    		boolean ok = true;
+    		try
+    		{
+    			if(i == 0)
+    				mBitmap = BitmapFactory.decodeFile(imgName);
+    			else
+    			{
+    				opt.inSampleSize = factors[i];
+    				mBitmap = BitmapFactory.decodeFile(imgName, opt);
+    			}
+    		}
+    		catch(OutOfMemoryError e)
+    		{
+    			ok = false;
+    		}
+    		
+    		if(ok == true)
+    		{
+    			mScaleFactor = factors[i];
+    			break;
+    		}
+    	}
+
+        mImageView.setImageBitmap(mBitmap);
     	mLoadingView.setVisibility(SurfaceView.VISIBLE);
     	
     	new Thread(new Runnable() {  
@@ -211,50 +244,22 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
             		}
             	}
             	
-            	Bitmap bmp = Bitmap.createBitmap(image.width(), image.height(), Bitmap.Config.ARGB_8888);
             	Imgproc.cvtColor(image, image, Imgproc.COLOR_RGB2BGR);
-            	Utils.matToBitmap(image, bmp, true);
+            	if(mScaleFactor == 1)
+            		Utils.matToBitmap(image, mBitmap);
+            	else
+            	{
+            		Mat image2 = new Mat(mBitmap.getHeight(), mBitmap.getWidth(), image.type());
+            		Imgproc.resize(image, image2, image2.size());
+            		Utils.matToBitmap(image2, mBitmap);
+            		image2.release();
+            	}
             	
             	image.release();
             	shapes.release();
-    	    	mHandler.obtainMessage(MSG_SUCCESS, bmp).sendToTarget();
+    	    	mHandler.obtainMessage(MSG_SUCCESS, mBitmap).sendToTarget();
     		}  
     	}).start();  
-    }
-    
-    private boolean fittingOnStaticImage(String imgName){
-    	Log.d(TAG, "Fitting on " + imgName);
-    	Mat image = Highgui.imread(imgName, Highgui.IMREAD_COLOR);
-    	Mat shapes = new Mat();
-    	
-    	boolean flag = ASMFit.detectAll(image, shapes);
-        
-    	if(flag == true){
-    		ASMFit.fitting(image, shapes, 30);
-        	
-        	for(int i = 0; i < shapes.rows(); i++){
-        		for(int j = 0; j < shapes.row(i).cols()/2; j++){
-        			double x = shapes.get(i, 2*j)[0];
-    				double y = shapes.get(i, 2*j+1)[0];
-    				Point pt = new Point(x, y);
-    				
-    				Core.circle(image, pt, 3, mCyanColor, 2);
-        		}
-        	}
-        }
-    	else
-    		Toast.makeText(this, "Canot detect any face", Toast.LENGTH_LONG).show();
-
-        
-    	Bitmap bmp = Bitmap.createBitmap(image.width(), image.height(), Bitmap.Config.ARGB_8888);
-    	Imgproc.cvtColor(image, image, Imgproc.COLOR_RGB2BGR);
-    	Utils.matToBitmap(image, bmp, true);
-    	mImageView.setImageBitmap(bmp);
-    	
-    	image.release();
-    	shapes.release();
-           	
-        return flag;
     }
     
     private BaseLoaderCallback  mLoaderCallback = new BaseLoaderCallback(this) 
@@ -281,7 +286,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
 	@Override
     public void onCreate(Bundle savedInstanceState) 
 	{
-        Log.i(TAG, "called onCreate");
+		Log.i(TAG, "called onCreate");
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -290,7 +295,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
         setContentView(R.layout.asmlibrary_surface_view);
         
         mOpenCvCameraView = (JavaCameraView) findViewById(R.id.java_surface_back_view);
-        mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
+        mOpenCvCameraView.setVisibility(SurfaceView.GONE);
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
@@ -309,12 +314,21 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
         mLoadingView = (LoadingCircleView) findViewById(R.id.loading_cirle_view);
         mLoadingView.setVisibility(SurfaceView.GONE);
         
-      //OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this, mLoaderCallback);
-        if(OpenCVLoader.initDebug())
-        	initialize();
+        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this, mLoaderCallback);
+        //if(OpenCVLoader.initDebug())
+        //	initialize();
         
         mFrame = 0;
         mFlag = false;
+        
+        if(mCamera)
+        {
+            mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
+	    }
+        else
+        {
+             mImageView.setVisibility(SurfaceView.VISIBLE);
+        }
     }
 	
 	@Override
@@ -347,11 +361,6 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
         {
         	 mImageView = (MatrixImageView)findViewById(R.id.image_view);
              mImageView.setVisibility(SurfaceView.VISIBLE);
-             //mImageView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-             
-             //mLoadingView = (LoadingCircleView) findViewById(R.id.loading_cirle_view);
-             //mLoadingView.setVisibility(View.GONE);
-             //mLoadingView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         }
     }
     
@@ -366,7 +375,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
         
         if(mCamera)
         {
-        	mCameraitem.setVisible(true);
+        	mCameraitem.setVisible(m_NumberOfCameras > 1);
         	mAlbumItem.setVisible(false);
         }
         else
@@ -441,7 +450,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     		mChooseItem.setTitle(mCamera ? "Image Fitting" : "Video Fitting");
     		if(mCamera)
             {
-            	mCameraitem.setVisible(true);
+    			mCameraitem.setVisible(m_NumberOfCameras > 1);
             	mAlbumItem.setVisible(false);
             	
             	mImageView.setVisibility(SurfaceView.GONE);
@@ -459,7 +468,8 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
             	mAlbumItem.setVisible(true);
             	mCameraitem.setVisible(false);
             	
-            	mOpenCvFrontCameraView.setVisibility(SurfaceView.GONE);
+            	if (m_NumberOfCameras > 1)
+                    mOpenCvFrontCameraView.setVisibility(SurfaceView.GONE);
             	mOpenCvCameraView.setVisibility(SurfaceView.GONE);
             	mImageView.setVisibility(SurfaceView.VISIBLE);
             	
@@ -473,7 +483,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     	else if (item == mHelpItem)
         	new AlertDialog.Builder(this).setTitle("About ASMLibrary")
         		.setMessage("ASMLibrary -- A compact SDK for face alignment/tracking\n" +
-        				"Copyright (c) 2008-2011 by Yao Wei, all rights reserved.\n" +
+        				"Copyright (c) 2008-2015 by Yao Wei, all rights reserved.\n" +
         				"Contact: njustyw@gmail.com\n")
         				.setPositiveButton("OK", null).show();
         else if(item == mDetectItem)
