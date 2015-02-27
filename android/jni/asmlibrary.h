@@ -413,7 +413,7 @@ public:
 	 @return false on failure, true otherwise
 	*/
 	bool Fit(asm_shape& shape, const IplImage *grayimage, 
-		int max_iter = 30, const scale_param* param = NULL);	
+		int max_iter = 30, const scale_param* param = NULL, int video = 2);	
 	
 	/**
      Write model data to file stream.
@@ -524,8 +524,9 @@ private:
 	 @param image the image resource
 	 @param ilev one certain pyramid level
 	 @param iter_no the number of iteration
+	 @return false on failure, true otherwise
 	*/
-	void PyramidFit(asm_shape& shape, const IplImage* image, int ilev, int iter_no);
+	bool PyramidFit(asm_shape& shape, const IplImage* image, int ilev, int iter_no);
 
 private:
 
@@ -565,6 +566,7 @@ private:
 	asm_profile* m_profile;		/**< Cached variables for speed up */
 	asm_shape	m_search_shape;	/**< Cached variables for speed up */
 	asm_shape	m_temp_shape;	/**< Cached variables for speed up */
+	double		m_cost;
 };
 
 /** You can define your own face detector function here
