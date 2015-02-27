@@ -11,6 +11,8 @@ public class ASMFit {
 		}  
 	
 	public static native boolean nativeReadModel(String modelName);
+
+	public static native boolean nativeReadAAMModel(String modelName);
 	
 	/**
 	 * @param cascadeName could be haarcascade_frontalface_alt2.xml 
@@ -74,7 +76,9 @@ public class ASMFit {
 				shape.getNativeObjAddr(), frame, n_iteration);
 	}
 	
-	
+	public static void drawAvatar(Mat imageColor, Mat shape){
+		nativeDrawAvatar(imageColor.getNativeObjAddr(), shape.getNativeObjAddr());
+	}
 	
 	private static native boolean nativeDetectAll(long inputImage, long faces);
 	private static native boolean nativeDetectOne(long inputImage, long face);
@@ -82,5 +86,5 @@ public class ASMFit {
 	private static native void nativeInitShape(long faces);	
 	private static native void nativeFitting(long inputImage, long shapes, long n_iteration);
 	private static native boolean nativeVideoFitting(long inputImage, long shape, long frame, long n_iteration);
-
+	private static native void nativeDrawAvatar(long inputImage, long shape);
 }

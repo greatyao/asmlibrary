@@ -33,7 +33,7 @@ public class LoadingCircleView extends View {
 	// 瀛楃殑澶у皬
 	private int textSize;
 
-	private String textProgress;
+	private String textProgress = "";
 
 	public LoadingCircleView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
@@ -44,8 +44,8 @@ public class LoadingCircleView extends View {
 		this.ringWidth = dip2px(context, 10); // 璁剧疆鍦嗙幆瀹藉害
 		this.ringColor = Color.BLACK;// 榛戣壊杩涘害鏉¤儗鏅�
 		this.progressColor = Color.WHITE;// 鐧借壊杩涘害鏉�
-		this.textColor = Color.BLACK;// 榛戣壊鏁板瓧鏄剧ず杩涘害;
-		this.textSize = 15;// 榛樿瀛椾綋澶у皬
+		this.textColor = Color.RED;// 榛戣壊鏁板瓧鏄剧ず杩涘害;
+		this.textSize = 40;// 榛樿瀛椾綋澶у皬
 	}
 
 	public LoadingCircleView(Context context, AttributeSet attrs) {
@@ -76,6 +76,11 @@ public class LoadingCircleView extends View {
 	 */
 	public synchronized int getMax() {
 		return max;
+	}
+	
+	public synchronized void setStatus(String text) {
+		this.textProgress = text;
+		invalidate();
 	}
 
 	/**
@@ -166,10 +171,9 @@ public class LoadingCircleView extends View {
 		this.paint.setStrokeWidth(0);
 		this.paint.setTextSize(textSize);
 		this.paint.setTypeface(Typeface.DEFAULT_BOLD);
-		//textProgress = (int) (1000 * (progress / (10.0 * max))) + "%";
-		//float textWidth = paint.measureText(textProgress);
-		//canvas.drawText(textProgress, center - textWidth / 2, center + textSize
-		//		/ 2, paint);
+
+		float textWidth = paint.measureText(textProgress);
+		canvas.drawText(textProgress, center - textWidth / 2, center + textSize / 2, paint);
 
 		super.onDraw(canvas);
 	}

@@ -5,6 +5,7 @@
 
 #include "asmfitting.h"
 #include "vjfacedetect.h"
+#include "AAM_IC.h"
 
 #include <string>
 #include <vector>
@@ -23,11 +24,37 @@ using namespace cv;
 					LOGD(exp " time cost: %.2f millisec\n", t);
 
 asmfitting fit_asm;
+AAM_IC aam;
 DetectionBasedTracker *track = NULL;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+JNIEXPORT jboolean JNICALL Java_org_asmlibrary_fit_ASMFit_nativeReadAAMModel
+(JNIEnv * jenv, jclass, jstring jFileName)
+{
+    LOGD("nativeReadAAMModel enter");
+    const char* filename = jenv->GetStringUTFChars(jFileName, NULL);
+    jboolean result = false;
+
+    try
+    {
+	if(aam.ReadModel(filename) == true)
+		result = true;
+
+    }
+    catch (...)
+    {
+        LOGD("nativeReadAAMModel caught unknown exception");
+        jclass je = jenv->FindClass("java/lang/Exception");
+        jenv->ThrowNew(je, "Unknown exception in JNI code");
+    }
+
+    LOGD("nativeReadAAMModel %s exit %d", filename, result);
+    return result;
+}
+
 
 JNIEXPORT jboolean JNICALL Java_org_asmlibrary_fit_ASMFit_nativeReadModel
 (JNIEnv * jenv, jclass, jstring jFileName)
@@ -329,6 +356,38 @@ JNIEXPORT jboolean JNICALL Java_org_asmlibrary_fit_ASMFit_nativeVideoFitting
 
 	return flag;
 }
+
+static AAM_Shape ShapeAAMFromASM(const asm_shape& shape)
+{
+	AAM_Shape s;
+	s.resize(shape.NPoints());
+	for(int i = 0; i < shape.NPoints(); i++)
+	{
+		s[i].x = shape[i].x;
+		s[i].y = shape[i].y;
+	}
+	return s;
+}
+
+JNIEXPORT void JNICALL Java_org_asmlibrary_fit_ASMFit_nativeDrawAvatar
+(JNIEnv * jenv, jclass, jlong imageColor, jlong shapes0)
+{
+	IplImage image = *(Mat*)imageColor;
+	Mat shapes1 = *(Mat*)shapes0;	
+	if(shapes1.rows == 1)
+	{
+		asm_shape shape;
+	
+		BEGINT();
+
+		Mat_to_shape(&shape, 1, shapes1);
+
+		aam.Draw(&image, ShapeAAMFromASM(shape),  AAM_Shape());
+
+		ENDT("nativeDrawAvatar");
+	}
+}
+
 
 #ifdef __cplusplus
 }

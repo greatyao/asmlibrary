@@ -14,7 +14,9 @@ include $(CLEAR_VARS)
 #OPENCV_LIB_TYPE:=SHARED
 include /media/work/Develop/opencv/OpenCV-2.4.6-android-sdk/sdk/native/jni/OpenCV.mk
 
-LOCAL_SRC_FILES  := DemoFit.cpp
+
+
+LOCAL_SRC_FILES  := DemoFit.cpp AAM_IC.cpp AAM_PDM.cpp AAM_Shape.cpp AAM_TDM.cpp AAM_PAW.cpp AAM_Util.cpp
 LOCAL_C_INCLUDES += $(LOCAL_PATH)
 LOCAL_CFLAGS    += -DOPENCV_OLDER_VISION
 LOCAL_LDLIBS     += -llog -ldl  

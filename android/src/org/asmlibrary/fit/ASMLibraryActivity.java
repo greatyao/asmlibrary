@@ -2,7 +2,9 @@ package org.asmlibrary.fit;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -55,15 +57,18 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
 	private static final String    TAG                 = "ASMLibraryDemo";
     
     private Mat                    	mRgba;
+    private Mat                    	mSmallRgba;
     private Mat                    	mGray;
     private File                   	mCascadeFile;
     private File                   	mFastCascadeFile;
     private File                   	mModelFile;
+    private File                   	mAAMModelFile;
     private int						m_NumberOfCameras = 0;
     private long				   	mFrame;
     private boolean					mFlag;
     private boolean					mFastDetect = false;
     private boolean					mCamera = true;
+    private boolean					mAvatar = false;
     private int						mCameraIdx = 0;
     private Mat						mShape;
     private static final Scalar 	mRedColor = new Scalar(255, 0, 0);
@@ -73,6 +78,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     private MenuItem				mCameraitem;
     private MenuItem				mAlbumItem;
     private MenuItem				mChooseItem;
+    private MenuItem				mAvatarItem;
     private JavaCameraView   		mOpenCvCameraView;
     private JavaCameraView   		mOpenCvFrontCameraView;
     private MatrixImageView   		mImageView;
@@ -86,12 +92,21 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     
     private File getSourceFile(int id, String name, String folder)
     {
-		File file = null;
+    	File cascadeDir = getDir(folder, Context.MODE_PRIVATE);
+        File file = new File(cascadeDir, name);
+        boolean existed = true;
+        try {
+			FileInputStream fis=new FileInputStream(file);
+		} catch (FileNotFoundException e) {
+			//e.printStackTrace();
+			existed = false;
+		}
+        if(existed == true)
+        	return file;
+        
 		try 
 		{
     		InputStream is = getResources().openRawResource(id);
-            File cascadeDir = getDir(folder, Context.MODE_PRIVATE);
-            file = new File(cascadeDir, name);
             FileOutputStream os = new FileOutputStream(file);
             
             byte[] buffer = new byte[4096];
@@ -113,12 +128,16 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     
     private void initialize()
     {
-        mModelFile = getSourceFile(R.raw.my68_1d, "my68_1d.amf", "model");
+       mModelFile = getSourceFile(R.raw.my68_1d, "my68_1d.amf", "model");
         if(mModelFile != null)
         	ASMFit.nativeReadModel(mModelFile.getAbsolutePath());   
+
+        mAAMModelFile = getSourceFile(R.raw.my68, "my68.aam", "model");
+        if(mAAMModelFile != null)
+        	ASMFit.nativeReadAAMModel(mAAMModelFile.getAbsolutePath());   
         
         mCascadeFile = getSourceFile(R.raw.haarcascade_frontalface_alt2, 
-        		"haarcascade_frontalface_alt2.xml", "cascade");
+        		"haarcascade_frontalface_alt2.xml", "model");
         if(mCascadeFile != null)
         {
         	ASMFit.nativeInitCascadeDetector(mCascadeFile.getAbsolutePath());
@@ -128,17 +147,15 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
         }
 
         mFastCascadeFile = getSourceFile(R.raw.lbpcascade_frontalface, 
-        		"lbpcascade_frontalface.xml", "cascade");
+        		"lbpcascade_frontalface.xml", "model");
         if(mFastCascadeFile != null)
         	ASMFit.nativeInitFastCascadeDetector(mFastCascadeFile.getAbsolutePath());
-        
-        mCascadeFile.delete();
-        mFastCascadeFile.delete();
     }
     
     private static final int MSG_SUCCESS = 0;  
     private static final int MSG_FAILURE = 1;
     private static final int MSG_PROGRESS = 2;
+    private static final int MSG_STATUS = 3;
     
     private Handler mHandler = new Handler() {  
     	public void handleMessage (Message msg) {
@@ -157,8 +174,11 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     			case MSG_PROGRESS:
     				mLoadingView.setProgress(msg.arg1);
     				break;
-    			}  
-    	}  
+		    	case MSG_STATUS:
+					mLoadingView.setStatus(msg.arg1 == 0 ? "Detecting faces" : "Face alignment");
+					break;
+    		}
+		}  
     };  
 
     private String mImageFileName = new String();
@@ -226,6 +246,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     		public void run() {
     			Mat image = Highgui.imread(mImageFileName, Highgui.IMREAD_COLOR);
     	    	Mat shapes = new Mat();
+    	    	mHandler.obtainMessage(MSG_STATUS, 0, 0).sendToTarget(); 
     	    	boolean flag = ASMFit.detectAll(image, shapes);
     	    	
     	    	if(flag == false){
@@ -233,6 +254,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     	    		return;
     	    	}
     	    	
+    	    	mHandler.obtainMessage(MSG_STATUS, 1, 0).sendToTarget(); 
     	    	ASMFit.fitting(image, shapes, 30);
             	for(int i = 0; i < shapes.rows(); i++){
             		for(int j = 0; j < shapes.row(i).cols()/2; j++){
@@ -368,6 +390,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     public boolean onCreateOptionsMenu(Menu menu)
     {
     	mChooseItem = menu.add(mCamera ? "Image Fitting" : "Video Fitting");
+    	mAvatarItem = menu.add(mAvatar ? "Track" : "Avatar");
         mCameraitem = menu.add(mCameraIdx == 0 ? "Front Camera" : "Back Camera");
         mAlbumItem = menu.add("Pick Album");
         mDetectItem = menu.add(mFastDetect ? "JavaCascadeDetector" : "FastCascadeDetector");
@@ -377,11 +400,13 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
         {
         	mCameraitem.setVisible(m_NumberOfCameras > 1);
         	mAlbumItem.setVisible(false);
+        	mAvatarItem.setVisible(true);
         }
         else
         {
         	mAlbumItem.setVisible(true);
         	mCameraitem.setVisible(false);
+        	mAvatarItem.setVisible(false);
         }
         
         return true;
@@ -452,6 +477,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
             {
     			mCameraitem.setVisible(m_NumberOfCameras > 1);
             	mAlbumItem.setVisible(false);
+            	mAvatarItem.setVisible(true);
             	
             	mImageView.setVisibility(SurfaceView.GONE);
             	mCameraIdx = 0;
@@ -467,6 +493,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
             {
             	mAlbumItem.setVisible(true);
             	mCameraitem.setVisible(false);
+            	mAvatarItem.setVisible(false);
             	
             	if (m_NumberOfCameras > 1)
                     mOpenCvFrontCameraView.setVisibility(SurfaceView.GONE);
@@ -490,6 +517,11 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
         {
         	mFastDetect = !mFastDetect;
         	mDetectItem.setTitle(mFastDetect ? "JavaCascadeDetector" : "FastCascadeDetector");
+        }
+        else if(item == mAvatarItem)
+        {
+        	mAvatar = !mAvatar;
+        	mAvatarItem.setTitle(mAvatar ? "Track" : "Avatar");
         }
         else if(item == mCameraitem)
         {
@@ -535,6 +567,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     {
         mGray = new Mat();
         mRgba = new Mat();
+        mSmallRgba = new Mat();
         mShape = new Mat();
         mFrame = 0;
         mFlag = false;
@@ -544,6 +577,8 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     {
         mGray.release();
         mRgba.release();
+        mSmallRgba.release();
+        mShape.release();
     }
 
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) 
@@ -552,6 +587,16 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
         if(mCameraIdx == 1)
 			Core.flip(mRgba, mRgba, 1);
         Imgproc.cvtColor(mRgba, mGray, Imgproc.COLOR_RGBA2GRAY);
+        Mat submat = null;
+        if(mAvatar)
+    	{
+        	int w = mRgba.cols()/4;
+        	int h = mRgba.rows()/4;
+        	if(mSmallRgba.rows() != h)
+        		mSmallRgba.create(w, h, mRgba.type());
+        	Imgproc.resize(mRgba, mSmallRgba, new Size(w, h));
+        	submat = mRgba.submat(new Rect(3*w, 0, w, h));
+    	}
         
         long lMilliStart = System.currentTimeMillis();
         
@@ -599,19 +644,35 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
 			
 		if(mFlag) 
 		{
-			mFlag = ASMFit.videoFitting(mGray, mShape, mFrame, 25);
+			mFlag = ASMFit.videoFitting(mGray, mShape, mFrame, 20);
 		}
 		
 		if(mFlag)
 		{
-			int nPoints = mShape.row(0).cols()/2;
-			for(int i = 0; i < nPoints; i++)
-			{ 
-				double x = mShape.get(0, 2*i)[0];
-				double y = mShape.get(0, 2*i+1)[0];
-				Point pt = new Point(x, y);
-				
-				Core.circle(mRgba, pt, 3, mCyanColor, 2);
+			if(mAvatar)
+			{
+				ASMFit.drawAvatar(mRgba, mShape);
+				mSmallRgba.copyTo(submat);
+			}
+			else
+			{
+				int nPoints = mShape.row(0).cols()/2;
+				for(int i = 0; i < nPoints; i++)
+				{ 
+					double x = mShape.get(0, 2*i)[0];
+					double y = mShape.get(0, 2*i+1)[0];
+					Point pt = new Point(x, y);
+					
+					Core.circle(mRgba, pt, 3, mCyanColor, 2);
+				}
+			}
+		}
+		else
+		{
+			if(mAvatar)
+			{
+				mRgba.setTo(new Scalar(0, 0, 0));
+				mSmallRgba.copyTo(submat);
 			}
 		}
 		
