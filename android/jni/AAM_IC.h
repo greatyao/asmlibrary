@@ -36,9 +36,8 @@ public:
 	// Draw the image according the searching result(0:point, 1:triangle, 2:appearance)
 	void DrawResult(IplImage* image, const AAM_Shape& Shape, int type);
 
-	//void Draw(IplImage* drawimage, const CvMat* s, int type, const IplImage*image = 0);
 	void Draw(IplImage* image, const AAM_Shape& Shape, 
-		const AAM_Shape& RefShape, const IplImage* refImage = NULL);
+		const AAM_Shape& RefShape, const IplImage* refImage = NULL, bool zero = true);
 
 
 	bool ReadModel(const std::string& filename);

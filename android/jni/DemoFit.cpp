@@ -370,7 +370,7 @@ static AAM_Shape ShapeAAMFromASM(const asm_shape& shape)
 }
 
 JNIEXPORT void JNICALL Java_org_asmlibrary_fit_ASMFit_nativeDrawAvatar
-(JNIEnv * jenv, jclass, jlong imageColor, jlong shapes0)
+(JNIEnv * jenv, jclass, jlong imageColor, jlong shapes0, jboolean zero)
 {
 	IplImage image = *(Mat*)imageColor;
 	Mat shapes1 = *(Mat*)shapes0;	
@@ -382,7 +382,7 @@ JNIEXPORT void JNICALL Java_org_asmlibrary_fit_ASMFit_nativeDrawAvatar
 
 		Mat_to_shape(&shape, 1, shapes1);
 
-		aam.Draw(&image, ShapeAAMFromASM(shape),  AAM_Shape());
+		aam.Draw(&image, ShapeAAMFromASM(shape),  AAM_Shape(), NULL, zero);
 
 		ENDT("nativeDrawAvatar");
 	}

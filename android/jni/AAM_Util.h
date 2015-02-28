@@ -67,6 +67,11 @@ public:
 	static void DrawAppearance(IplImage*image, const AAM_Shape& Shape,
 		const CvMat* t, const AAM_PAW& paw, const AAM_PAW& refpaw);
 
+	static void DrawAppearanceWithThread(IplImage*image, const AAM_Shape& Shape,
+		const CvMat* t, const AAM_PAW& paw, const AAM_PAW& refpaw, int thread = 2);
+		
+	static void* ThreadDrawAppearance(void* p);
+
 	static int MkDir(const char* dirname);
 
 };

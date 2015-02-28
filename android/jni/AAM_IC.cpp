@@ -122,7 +122,7 @@ void AAM_IC::DrawResult(IplImage* image, const AAM_Shape& Shape, int type)
 
 //============================================================================
 void AAM_IC::Draw(IplImage* image, const AAM_Shape& Shape, 
-		const AAM_Shape& RefShape, const IplImage* refImage)
+		const AAM_Shape& RefShape, const IplImage* refImage, bool zero)
 {
 	//get the warped texture of another person
 	if(refImage == NULL)
@@ -145,8 +145,8 @@ void AAM_IC::Draw(IplImage* image, const AAM_Shape& Shape,
 	AAM_PAW paw;
 	paw.Train(Shape, __Points, __Storage, __paw.GetTri(), false);
 
-	cvZero(image);
-	AAM_Common::DrawAppearance(image, Shape, __warp_t, paw, __paw);
+	if(zero) cvZero(image);
+	AAM_Common::DrawAppearanceWithThread(image, Shape, __warp_t, paw, __paw, 2);
 }
 
 //============================================================================

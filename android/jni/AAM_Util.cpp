@@ -196,7 +196,6 @@ static void DrawAppearanceRGBAChannel(const AAM_Shape& refShape,
 	byte *pimg, *pimg2;
 	int nPoints = Shape.NPoints();
 	double alpha0, belta0, gamma0;
-	double t = gettime;
 	
 	minx = Shape.MinX(); miny = Shape.MinY();
 	maxx = Shape.MaxX(); maxy = Shape.MaxY();
@@ -249,8 +248,6 @@ static void DrawAppearanceRGBAChannel(const AAM_Shape& refShape,
 			//	pimg2 += 4;
 		}
 	}
-
-	LOGD("DrawAppearanceRGBA time cost %.3f\n", gettime-t);
 }
 
 static void DrawAppearanceRGBChannel(const AAM_Shape& refShape, 
@@ -310,6 +307,138 @@ static void DrawAppearanceRGBChannel(const AAM_Shape& refShape,
 		}
 	}
 }
+
+#include <pthread.h>
+
+struct thread_param
+{
+	IplImage* image;
+	AAM_Shape Shape;
+	CvMat* t;
+	const AAM_PAW* paw;
+	const AAM_PAW* refpaw;
+	int oddx;
+	int oddy;
+};
+
+void* AAM_Common::ThreadDrawAppearance(void* p)
+{
+	thread_param* param = (thread_param*)p;
+	int oddx = param->oddx;
+	int oddy = param->oddy;
+	IplImage* image = param->image;
+	const AAM_Shape& Shape = param->Shape;
+	CvMat* t = param->t;
+	const AAM_PAW* paw = param->paw;
+	const AAM_PAW* refpaw = param->refpaw;
+	int x1, x2, y1, y2, idx1, idx2;
+	int xby3, idxby3;
+	int minx, miny, maxx, maxy;
+	int tri_idx, v1, v2, v3;
+	byte* pimg;
+	double* fastt = t->data.db;
+	int nChannel = image->nChannels;
+	int nPoints = Shape.NPoints();
+	const AAM_Shape& refShape = refpaw->__referenceshape;
+	const std::vector<std::vector<int> >& tri = paw->__tri;
+	const std::vector<std::vector<int> >& rect1 = paw->__rect;
+	const std::vector<std::vector<int> >& rect2 = refpaw->__rect;
+	const std::vector<int>& pixTri = paw->__pixTri;
+	const std::vector<double>& alpha = paw->__alpha;
+	const std::vector<double>& belta= paw->__belta;
+	const std::vector<double>& gamma = paw->__gamma;
+	int stepx = 1;
+
+	minx = Shape.MinX(); miny = Shape.MinY();
+	maxx = Shape.MaxX(); maxy = Shape.MaxY();
+	if(oddy == 1) miny = miny/2*2+1;
+	else	      miny = (miny+1)/2*2;
+	if(oddx != -1)
+	{
+		if(oddx == 1) minx = minx/2*2+1;
+		else	      minx = (minx+1)/2*2;
+	}
+
+	for(int y = miny; y < maxy; y+=2)
+	{
+		y1 = y-miny;
+		pimg = (byte*)(image->imageData + image->widthStep*y);
+		for(int x = minx; x < maxx; x+=stepx)
+		{
+			x1 = x-minx;
+			idx1 = rect1[y1][x1];
+			if(idx1 >= 0)
+			{
+				tri_idx = pixTri[idx1];
+				v1 = tri[tri_idx][0];
+				v2 = tri[tri_idx][1];
+				v3 = tri[tri_idx][2];
+		
+				x2 = alpha[idx1]*refShape[v1].x + belta[idx1]*refShape[v2].x +  
+					gamma[idx1]*refShape[v3].x;
+				y2 = alpha[idx1]*refShape[v1].y + belta[idx1]*refShape[v2].y +  
+					gamma[idx1]*refShape[v3].y;
+				
+				if(y2 < 0 || x2 < 0) continue;	
+				idx2 = rect2[y2][x2];	
+				idxby3 = idx2 + (idx2<<1);	/* 3*idx2 */
+				
+				if(nChannel == 4)
+				{	
+					xby3 = x<<2;			/* 4*x ABGR */
+					pimg[xby3+2] = fastt[idxby3  ];
+					pimg[xby3+1] = fastt[idxby3+1];
+					pimg[xby3  ] = fastt[idxby3+2];
+				}
+				else if(nChannel == 3)
+				{	
+					xby3 = x + (x<<1);			/* 3*x */
+					pimg[xby3  ] = fastt[idxby3  ];
+					pimg[xby3+1] = fastt[idxby3+1];
+					pimg[xby3+2] = fastt[idxby3+2];
+				}
+				else
+				{
+					pimg[x] = (fastt[idxby3]+fastt[idxby3+1]+fastt[idxby3+2])/3;
+				}
+			}
+		}
+	}
+	return NULL;
+}
+
+void AAM_Common::DrawAppearanceWithThread(IplImage* image, const AAM_Shape& Shape,
+		const CvMat* t, const AAM_PAW& paw, const AAM_PAW& refpaw, int thread)
+{
+	double t0 = gettime;
+	thread = thread >= 4 ? 4 : (thread >=2 ? 2 : 1);
+	
+	if(thread == 1)
+		DrawAppearance(image, Shape, t, paw, refpaw);
+	else
+	{
+		thread_param param[4];
+		pthread_t id[4];
+		for(int i = 0; i < thread; i++)
+		{
+			param[i].image = image;
+			param[i].Shape = Shape;
+			param[i].t = (CvMat*)t;
+			param[i].paw = &paw;
+			param[i].refpaw = &refpaw;
+			param[i].oddy = i%2;
+			if(thread == 4) param[i].oddx = i/2%2;
+			else			param[i].oddx = -1;
+			pthread_create(&id[i], NULL, ThreadDrawAppearance, &param[i]);
+		}
+		
+		for(int i = 0; i < thread; i++)
+			pthread_join(id[i], NULL);
+	}
+	
+	LOGD("DrawAppearance (thread=%d, size=%.0fx%.0f) time cost %.3f ms\n", thread, Shape.GetWidth(), Shape.GetHeight(), gettime-t0);
+}
+
 
 void AAM_Common::DrawAppearance(IplImage*image, const AAM_Shape& Shape, 
 				const CvMat* t, const AAM_PAW& paw, const AAM_PAW& refpaw)
