@@ -49,7 +49,6 @@ import android.database.Cursor;
 import android.graphics.Bitmap;    
 import android.graphics.BitmapFactory;
 import android.provider.MediaStore;
-import android.provider.DocumentsContract;
 import android.widget.Toast;
 
 public class ASMLibraryActivity extends Activity implements CvCameraViewListener2
@@ -434,21 +433,6 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
 	            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
 	            cursor.moveToFirst();
 	            path = cursor.getString(column_index);
-	            if(path == null){
-	            	cursor.close();
-	            	path = uri.getPath();
-	                String wholeID = DocumentsContract.getDocumentId(uri);
-	                String id = wholeID.split(":")[1];
-	                String[] column = { MediaStore.Images.Media.DATA };
-	                String sel = MediaStore.Images.Media._ID + "=?";
-	                cursor = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-	                        column, sel, new String[] { id }, null);
-	                column_index = cursor.getColumnIndex(column[0]);
-	                if (cursor.moveToFirst()) {
-	                    path = cursor.getString(column_index);
-		            	cursor.close();
-	                }
-	            }
             	cursor.close();
 	        }
 	        if(path == null)
@@ -460,7 +444,7 @@ public class ASMLibraryActivity extends Activity implements CvCameraViewListener
     
     private void chooseImageFromAlbum()
     {
-    	Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+    	Intent intent = new Intent(Intent.ACTION_PICK);
     	intent.setType("image/*");
     	startActivityForResult(Intent.createChooser(intent, "Select Picture"), SELECT_PICTURE);  
     }
