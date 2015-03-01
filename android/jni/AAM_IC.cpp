@@ -14,13 +14,8 @@ AAM_IC::AAM_IC()
 	__Points = 0;
 	__Storage = 0;
 
-	__update_s0 = 0;
 	__warp_t = 0;
-	__error_t = 0;
-	__search_pq = 0;
-	__delta_pq = 0;
 	__current_s = 0;
-	__update_s = 0;
 }
 
 //============================================================================
@@ -29,13 +24,8 @@ AAM_IC::~AAM_IC()
 	cvReleaseMat(&__Points);
 	cvReleaseMemStorage(&__Storage);
 
-	cvReleaseMat(&__update_s0);
 	cvReleaseMat(&__warp_t);
-	cvReleaseMat(&__error_t);
-	cvReleaseMat(&__search_pq);
-	cvReleaseMat(&__delta_pq);
 	cvReleaseMat(&__current_s);
-	cvReleaseMat(&__update_s);
 }
 
 //============================================================================
@@ -88,36 +78,10 @@ void AAM_IC::Train(const file_lists& pts_files,
 	__texture.Train(pts_files, img_files, __paw, texture_percentage, true);
 
 	//alocate memory for on-line fitting stuff
-	__update_s0 = cvCreateMat(1, __shape.nPoints()*2, CV_64FC1);
-	__inv_pq = cvCreateMat(1, __shape.nModes()+4, CV_64FC1);
 	__warp_t = cvCreateMat(1, __texture.nPixels(), CV_64FC1);
-	__error_t = cvCreateMat(1, __texture.nPixels(), CV_64FC1);
-	__search_pq = cvCreateMat(1, __shape.nModes()+4, CV_64FC1);
-	__delta_pq = cvCreateMat(1, __shape.nModes()+4, CV_64FC1);
 	__current_s = cvCreateMat(1, __shape.nPoints()*2, CV_64FC1);
-	__update_s = cvCreateMat(1, __shape.nPoints()*2, CV_64FC1);
-	__lamda  = cvCreateMat(1, __texture.nModes(), CV_64FC1);
 
 	LOGD("################################################\n\n");
-}
-
-//============================================================================
-void AAM_IC::DrawResult(IplImage* image, const AAM_Shape& Shape, int type)
-{
-	if(type == 0) AAM_Common::DrawPoints(image, Shape);
-	else if(type == 1) AAM_Common::DrawTriangles(image, Shape, __paw.__tri);
-	else if(type == 2) 
-	{
-		cvGEMM(__error_t, __texture.GetBases(), 1, NULL, 1, __lamda, CV_GEMM_B_T);
-		__texture.CalcTexture(__lamda, __warp_t);
-		AAM_PAW paw;
-		double minV, maxV;
-		cvMinMaxLoc(__warp_t, &minV, &maxV);
-		cvConvertScale(__warp_t, __warp_t, 255/(maxV-minV), -minV*255/(maxV-minV));
-		paw.Train(Shape, __Points, __Storage, __paw.GetTri(), false);
-		AAM_Common::DrawAppearance(image, Shape, __warp_t, paw, __paw);
-	}
-	else LOGW("ERROR(%s, %d): Unsupported drawing type\n", __FILE__, __LINE__);
 }
 
 //============================================================================
@@ -173,15 +137,8 @@ void AAM_IC::Read(std::ifstream& is)
 	__Points = cvCreateMat (1, __shape.nPoints(), CV_32FC2);
 	__Storage = cvCreateMemStorage(0);
 
-	__update_s0 = cvCreateMat(1, __shape.nPoints()*2, CV_64FC1);
-	__inv_pq = cvCreateMat(1, __shape.nModes()+4, CV_64FC1);
 	__warp_t = cvCreateMat(1, __texture.nPixels(), CV_64FC1);
-	__error_t = cvCreateMat(1, __texture.nPixels(), CV_64FC1);
-	__search_pq = cvCreateMat(1, __shape.nModes()+4, CV_64FC1);
-	__delta_pq = cvCreateMat(1, __shape.nModes()+4, CV_64FC1);
 	__current_s = cvCreateMat(1, __shape.nPoints()*2, CV_64FC1);
-	__update_s = cvCreateMat(1, __shape.nPoints()*2, CV_64FC1);
-	__lamda  = cvCreateMat(1, __texture.nModes(), CV_64FC1);
 }
 
 //============================================================================

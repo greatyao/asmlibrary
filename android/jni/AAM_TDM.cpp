@@ -296,8 +296,8 @@ void AAM_TDM::Write(std::ofstream& os)
 	os.write((char*)&_nModes, sizeof(int));
 
 	WriteCvMat(os, __MeanTexture);
-	WriteCvMat(os, __TextureEigenValues);
-	WriteCvMat(os, __TextureEigenVectors);
+	//WriteCvMat(os, __TextureEigenValues);
+	//WriteCvMat(os, __TextureEigenVectors);
 }
 
 //============================================================================
@@ -308,10 +308,10 @@ void AAM_TDM::Read(std::ifstream& is)
 	is.read((char*)&_nModes, sizeof(int));
 	
 	__MeanTexture = cvCreateMat(1, _npixels, CV_64FC1);
-	__TextureEigenValues = cvCreateMat(1, _nModes, CV_64FC1);
-	__TextureEigenVectors = cvCreateMat(_nModes, _npixels, CV_64FC1);
+	//__TextureEigenValues = cvCreateMat(1, _nModes, CV_64FC1);
+	//__TextureEigenVectors = cvCreateMat(_nModes, _npixels, CV_64FC1);
 
 	ReadCvMat(is, __MeanTexture);
-	ReadCvMat(is, __TextureEigenValues);
-	ReadCvMat(is, __TextureEigenVectors);
+	//ReadCvMat(is, __TextureEigenValues);
+	//ReadCvMat(is, __TextureEigenVectors);
 }

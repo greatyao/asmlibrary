@@ -33,9 +33,6 @@ public:
 		double scale = 1.0, double shape_percentage = 0.975, 
 		double texture_percentage = 0.975);
 
-	// Draw the image according the searching result(0:point, 1:triangle, 2:appearance)
-	void DrawResult(IplImage* image, const AAM_Shape& Shape, int type);
-
 	void Draw(IplImage* image, const AAM_Shape& Shape, 
 		const AAM_Shape& RefShape, const IplImage* refImage = NULL, bool zero = true);
 
@@ -71,16 +68,8 @@ private:
 
 private:
 	//pre-allocated stuff for online alignment
-	CvMat*		__update_s0;	/*shape change at the base mesh */
-	CvMat*		__inv_pq;		/*inverse parameters at the base mesh*/
-	
 	CvMat*		__warp_t;		/*warp image to base mesh*/
-	CvMat*		__error_t;		/*error between warp image and template image A0*/
-	CvMat*		__search_pq;	/*search parameters */
-	CvMat*		__delta_pq;		/*parameters change to be updated*/
 	CvMat*		__current_s;		/*current search shape*/
-	CvMat*		__update_s;		/*shape after composing the warp*/
-	CvMat*		__lamda;		/*appearance parameters*/
 };
 
 #endif 
