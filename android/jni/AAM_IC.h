@@ -69,6 +69,7 @@ private:
 private:
 	//pre-allocated stuff for online alignment
 	CvMat*		__warp_t;		/*warp image to base mesh*/
+	CvMat*		__warp2_t;		/*warp image to base mesh*/
 	CvMat*		__current_s;		/*current search shape*/
 };
 

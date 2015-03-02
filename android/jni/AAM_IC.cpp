@@ -15,6 +15,7 @@ AAM_IC::AAM_IC()
 	__Storage = 0;
 
 	__warp_t = 0;
+	__warp2_t = 0;
 	__current_s = 0;
 }
 
@@ -25,6 +26,7 @@ AAM_IC::~AAM_IC()
 	cvReleaseMemStorage(&__Storage);
 
 	cvReleaseMat(&__warp_t);
+	cvReleaseMat(&__warp2_t);
 	cvReleaseMat(&__current_s);
 }
 
@@ -79,6 +81,7 @@ void AAM_IC::Train(const file_lists& pts_files,
 
 	//alocate memory for on-line fitting stuff
 	__warp_t = cvCreateMat(1, __texture.nPixels(), CV_32FC1);
+	__warp2_t = cvCreateMat(1, __texture.nPixels(), CV_8UC1);
 	__current_s = cvCreateMat(1, __shape.nPoints()*2, CV_32FC1);
 
 	LOGD("################################################\n\n");
@@ -104,13 +107,13 @@ void AAM_IC::Draw(IplImage* image, const AAM_Shape& Shape,
 
 	double minV, maxV;
 	cvMinMaxLoc(__warp_t, &minV, &maxV);
-	cvConvertScale(__warp_t, __warp_t, 255/(maxV-minV), -minV*255/(maxV-minV));
+	cvConvertScale(__warp_t, __warp2_t, 255/(maxV-minV), -minV*255/(maxV-minV));
 	
 	AAM_PAW paw;
 	paw.Train(Shape, __Points, __Storage, __paw.GetTri(), false);
 
 	if(zero) cvZero(image);
-	AAM_Common::DrawAppearanceWithThread(image, Shape, __warp_t, paw, __paw, 2);
+	AAM_Common::DrawAppearanceWithThread(image, Shape, __warp2_t, paw, __paw, 2);
 }
 
 //============================================================================
@@ -138,6 +141,7 @@ void AAM_IC::Read(std::ifstream& is)
 	__Storage = cvCreateMemStorage(0);
 
 	__warp_t = cvCreateMat(1, __texture.nPixels(), CV_32FC1);
+	__warp2_t = cvCreateMat(1, __texture.nPixels(), CV_8UC1);
 	__current_s = cvCreateMat(1, __shape.nPoints()*2, CV_32FC1);
 }
 

@@ -187,7 +187,7 @@ static void DrawAppearanceRGBAChannel(const AAM_Shape& refShape,
 									const std::vector<float>& alpha,
 									const std::vector<float>& belta,
 									const std::vector<float>& gamma,
-									const float* fastt, const AAM_Shape& Shape, IplImage* image)
+									const byte* fastt, const AAM_Shape& Shape, IplImage* image)
 {
 	int x1, x2, y1, y2, idx1, idx2;
 	int xby4, idxby3;
@@ -255,7 +255,7 @@ static void DrawAppearanceRGBChannel(const AAM_Shape& refShape,
 									const std::vector<float>& alpha,
 									const std::vector<float>& belta,
 									const std::vector<float>& gamma,
-									const float* fastt, const AAM_Shape& Shape, IplImage* image)
+									const byte* fastt, const AAM_Shape& Shape, IplImage* image)
 {
 	int x1, x2, y1, y2, idx1, idx2;
 	int xby3, idxby3;
@@ -333,7 +333,7 @@ void* AAM_Common::ThreadDrawAppearance(void* p)
 	int minx, miny, maxx, maxy;
 	int tri_idx, v1, v2, v3;
 	byte* pimg;
-	float* fastt = t->data.fl;
+	byte* fastt = t->data.ptr;
 	int nChannel = image->nChannels;
 	int nPoints = Shape.NPoints();
 	const AAM_Shape& refShape = refpaw->__referenceshape;
@@ -371,11 +371,15 @@ void* AAM_Common::ThreadDrawAppearance(void* p)
 				v1 = tri[tri_idx][0];
 				v2 = tri[tri_idx][1];
 				v3 = tri[tri_idx][2];
+
+				const CvPoint2D32f &s1 = refShape[v1], &s2 = refShape[v2], &s3 = refShape[v3];
+				x2 = alpha[idx1]*s1.x + belta[idx1]*s2.x + gamma[idx1]*s3.x;
+				y2 = alpha[idx1]*s1.y + belta[idx1]*s2.y + gamma[idx1]*s3.y;
 		
-				x2 = alpha[idx1]*refShape[v1].x + belta[idx1]*refShape[v2].x +  
-					gamma[idx1]*refShape[v3].x;
-				y2 = alpha[idx1]*refShape[v1].y + belta[idx1]*refShape[v2].y +  
-					gamma[idx1]*refShape[v3].y;
+				//x2 = alpha[idx1]*refShape[v1].x + belta[idx1]*refShape[v2].x +  
+				//	gamma[idx1]*refShape[v3].x;
+				//y2 = alpha[idx1]*refShape[v1].y + belta[idx1]*refShape[v2].y +  
+				//	gamma[idx1]*refShape[v3].y;
 				
 				if(y2 < 0 || x2 < 0) continue;	
 				idx2 = rect2[y2][x2];	
@@ -446,7 +450,7 @@ void AAM_Common::DrawAppearance(IplImage*image, const AAM_Shape& Shape,
 	int minx, miny, maxx, maxy;
 	int tri_idx, v1, v2, v3;
 	byte* pimg;
-	float* fastt = t->data.fl;
+	byte* fastt = t->data.ptr;
 	int nChannel = image->nChannels;
 	int nPoints = Shape.NPoints();
 	const AAM_Shape& refShape = refpaw.__referenceshape;
