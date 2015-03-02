@@ -28,16 +28,16 @@ AAM_TDM::~AAM_TDM()
 //============================================================================
 void AAM_TDM::Train(const file_lists& pts_files, const file_lists& img_files, 
 					const AAM_PAW& m_warp, 
-					double texture_percentage /* = 0.975 */, 
+					float texture_percentage /* = 0.975 */, 
 					bool registration /* = true */)
 {
 	int nPoints = m_warp.nPoints();
 	int nPixels = m_warp.nPix()*3;
 	int nSamples = pts_files.size();
 	
-	CvMat *AllTextures = cvCreateMat(nSamples, nPixels, CV_64FC1);
+	CvMat *AllTextures = cvCreateMat(nSamples, nPixels, CV_32FC1);
 	
-	CvMat * matshape = cvCreateMat(1, nPoints*2, CV_64FC1);
+	CvMat * matshape = cvCreateMat(1, nPoints*2, CV_32FC1);
 	for(int i = 0; i < nSamples; i++)
 	{
 		IplImage* image = cvLoadImage(img_files[i].c_str(), -1);
@@ -67,7 +67,7 @@ void AAM_TDM::Train(const file_lists& pts_files, const file_lists& img_files,
 }
 
 //============================================================================
-void AAM_TDM::DoPCA(const CvMat* AllTextures, double percentage)
+void AAM_TDM::DoPCA(const CvMat* AllTextures, float percentage)
 {
 	LOGD("Doing PCA of textures datas...");
 
@@ -75,28 +75,28 @@ void AAM_TDM::DoPCA(const CvMat* AllTextures, double percentage)
 	int nPixels = AllTextures->cols;
     int nEigenAtMost = MIN(nSamples, nPixels);
 
-    CvMat* tmpEigenValues = cvCreateMat(1, nEigenAtMost, CV_64FC1);
-    CvMat* tmpEigenVectors = cvCreateMat(nEigenAtMost, nPixels, CV_64FC1);
-    __MeanTexture = cvCreateMat(1, nPixels, CV_64FC1 );
+    CvMat* tmpEigenValues = cvCreateMat(1, nEigenAtMost, CV_32FC1);
+    CvMat* tmpEigenVectors = cvCreateMat(nEigenAtMost, nPixels, CV_32FC1);
+    __MeanTexture = cvCreateMat(1, nPixels, CV_32FC1 );
 
     cvCalcPCA(AllTextures, __MeanTexture, 
         tmpEigenValues, tmpEigenVectors, CV_PCA_DATA_AS_ROW);
 
-	double allSum = cvSum(tmpEigenValues).val[0];
-	double partSum = 0.0;
+	float allSum = cvSum(tmpEigenValues).val[0];
+	float partSum = 0.0;
     int nTruncated = 0;
-    double largesteigval = cvmGet(tmpEigenValues, 0, 0);
+    float largesteigval = cvmGet(tmpEigenValues, 0, 0);
 	for(int i = 0; i < nEigenAtMost; i++)
     {
-		double thiseigval = cvmGet(tmpEigenValues, 0, i);
+		float thiseigval = cvmGet(tmpEigenValues, 0, i);
         if(thiseigval / largesteigval < 0.0001) break; // firstly check(remove small values)
 		partSum += thiseigval;
 		++ nTruncated;
         if(partSum/allSum >= percentage)	break;    //secondly check
     }
 
-	__TextureEigenValues = cvCreateMat(1, nTruncated, CV_64FC1);
-	__TextureEigenVectors = cvCreateMat(nTruncated, nPixels, CV_64FC1);
+	__TextureEigenValues = cvCreateMat(1, nTruncated, CV_32FC1);
+	__TextureEigenVectors = cvCreateMat(nTruncated, nPixels, CV_32FC1);
     
 	CvMat G;
 	cvGetCols(tmpEigenValues, &G, 0, nTruncated);
@@ -124,12 +124,12 @@ void AAM_TDM::CalcParams(const CvMat* t, CvMat* lamda)
 }
 
 //============================================================================
-void AAM_TDM::Clamp(CvMat* lamda, double s_d /* = 3.0 */)
+void AAM_TDM::Clamp(CvMat* lamda, float s_d /* = 3.0 */)
 {
-	double* fastp = lamda->data.db;
-	double* fastv = __TextureEigenValues->data.db;
+	float* fastp = lamda->data.fl;
+	float* fastv = __TextureEigenValues->data.fl;
 	int nmodes = nModes();
-	double limit;
+	float limit;
 
 	for(int i = 0; i < nmodes; i++)
 	{
@@ -146,9 +146,9 @@ void AAM_TDM::AlignTextures(CvMat* AllTextures)
 	
 	int nsamples = AllTextures->rows;
 	int npixels = AllTextures->cols;
-	CvMat* meanTexture = cvCreateMat(1, npixels, CV_64FC1);
-	CvMat* lastMeanEstimate = cvCreateMat(1, npixels, CV_64FC1);
-	CvMat* constmeanTexture = cvCreateMat(1, npixels, CV_64FC1);
+	CvMat* meanTexture = cvCreateMat(1, npixels, CV_32FC1);
+	CvMat* lastMeanEstimate = cvCreateMat(1, npixels, CV_32FC1);
+	CvMat* constmeanTexture = cvCreateMat(1, npixels, CV_32FC1);
 	CvMat ti;
 
 	// calculate the mean texture 
@@ -157,7 +157,7 @@ void AAM_TDM::AlignTextures(CvMat* AllTextures)
 	cvCopy(meanTexture, constmeanTexture);
 		
 	// do a number of alignment iterations until convergence
-    double diff, diff_max = 1e-6;
+    float diff, diff_max = 1e-6;
 	const int max_iter = 15;
 	for(int iter = 0; iter < max_iter; iter++)
 	{
@@ -200,7 +200,7 @@ void AAM_TDM::CalcMeanTexture(const CvMat* AllTextures, CvMat* meanTexture)
 void AAM_TDM::NormalizeTexture(const CvMat* refTextrure, CvMat* Texture)
 {
 	AAM_TDM::ZeroMeanUnitLength(Texture);
-	double alpha = cvDotProduct(Texture, refTextrure);
+	float alpha = cvDotProduct(Texture, refTextrure);
 	if(alpha != 0)	cvConvertScale(Texture, Texture, 1.0/alpha, 0);
 }
 
@@ -209,7 +209,7 @@ void AAM_TDM::ZeroMeanUnitLength(CvMat* Texture)
 {
 	CvScalar mean =  cvAvg(Texture);
 	cvSubS(Texture, mean, Texture);
-	double norm = cvNorm(Texture);
+	float norm = cvNorm(Texture);
 	cvConvertScale(Texture, Texture, 1.0/norm);
 }
 
@@ -307,9 +307,9 @@ void AAM_TDM::Read(std::ifstream& is)
 	is.read((char*)&_npixels, sizeof(int));
 	is.read((char*)&_nModes, sizeof(int));
 	
-	__MeanTexture = cvCreateMat(1, _npixels, CV_64FC1);
-	//__TextureEigenValues = cvCreateMat(1, _nModes, CV_64FC1);
-	//__TextureEigenVectors = cvCreateMat(_nModes, _npixels, CV_64FC1);
+	__MeanTexture = cvCreateMat(1, _npixels, CV_32FC1);
+	//__TextureEigenValues = cvCreateMat(1, _nModes, CV_32FC1);
+	//__TextureEigenVectors = cvCreateMat(_nModes, _npixels, CV_32FC1);
 
 	ReadCvMat(is, __MeanTexture);
 	//ReadCvMat(is, __TextureEigenValues);

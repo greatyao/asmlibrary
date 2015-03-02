@@ -34,7 +34,7 @@ inline int pointPolygonTest2(CvPoint2D32f cntf[3], CvPoint pt)
 	
 	for( i = 0; i < total; i++ )
 	{
-		double dist;
+		float dist;
 		v0 = v;
 		v = cntf[i];
 		if( (v0.y <= pt.y && v.y <= pt.y) ||
@@ -46,7 +46,7 @@ inline int pointPolygonTest2(CvPoint2D32f cntf[3], CvPoint pt)
 			return 0;
 			continue;
 		}
-		dist = (double)(pt.y - v0.y)*(v.x - v0.x) - (double)(pt.x - v0.x)*(v.y - v0.y);
+		dist = (float)(pt.y - v0.y)*(v.x - v0.x) - (float)(pt.x - v0.x)*(v.y - v0.y);
 		if( dist == 0 )
 			return 0;
 		if( v.y < v0.y )
@@ -236,11 +236,11 @@ void AAM_PAW::CalcPixelPoint(const CvRect rect, CvMat* ConvexHull)//cost too muc
 	CvPoint2D32f point[3];
     CvMat tempVert = cvMat(1, 3, CV_32FC2, point);
 	int ll = 0;
-	double alpha, belta, gamma;
+	float alpha, belta, gamma;
 	CvPoint2D32f pt;
 	int ind1, ind2, ind3;
 	int ii, jj;
-	double x, y, x1, y1, x2, y2, x3, y3, c;
+	float x, y, x1, y1, x2, y2, x3, y3, c;
 	
 	__xmin = rect.x;
 	__ymin = rect.y;
@@ -461,12 +461,12 @@ void AAM_PAW::FastCalcPixelPoint(const CvRect rect)
 {
 	CvPoint2D32f point[3];
     CvMat oneTri = cvMat(1, 3, CV_32FC2, point);
-	double alpha, belta, gamma;
+	float alpha, belta, gamma;
 	CvPoint pt;
 	int ind1, ind2, ind3;
 	int ll = 0;
 	int x, y;
-	double x1, y1, x2, y2, x3, y3, c;
+	float x1, y1, x2, y2, x3, y3, c;
 	struct one_edge* idx = NULL;
 	
 	__xmin = rect.x;			__ymin = rect.y;
@@ -571,26 +571,26 @@ void AAM_PAW::FindVTri()
 }
 
 //============================================================================
-void AAM_PAW::CalcWarpParameters(double x, double y, double x1, double y1,
-		double x2, double y2, double x3, double y3, 
-		double &alpha, double &belta, double &gamma)
+void AAM_PAW::CalcWarpParameters(float x, float y, float x1, float y1,
+		float x2, float y2, float x3, float y3, 
+		float &alpha, float &belta, float &gamma)
 {
-	double c = (+x2*y3-x2*y1-x1*y3-x3*y2+x3*y1+x1*y2);
+	float c = (+x2*y3-x2*y1-x1*y3-x3*y2+x3*y1+x1*y2);
     alpha = (y*x3-y3*x+x*y2-x2*y+x2*y3-x3*y2) / c;
     belta  = (-y*x3+x1*y+x3*y1+y3*x-x1*y3-x*y1) / c;
     gamma = 1 - alpha - belta; 
 }
 
 //============================================================================
-void AAM_PAW::Warp(double x, double y, 
-				   double x1, double y1, double x2, double y2, double x3, double y3, 
-				   double& X, double& Y, 
-				   double X1, double Y1, double X2, double Y2, double X3, double Y3)
+void AAM_PAW::Warp(float x, float y, 
+				   float x1, float y1, float x2, float y2, float x3, float y3, 
+				   float& X, float& Y, 
+				   float X1, float Y1, float X2, float Y2, float X3, float Y3)
 {
-	double c = 1.0/(+x2*y3-x2*y1-x1*y3-x3*y2+x3*y1+x1*y2);
-    double alpha = (y*x3-y3*x+x*y2-x2*y+x2*y3-x3*y2)*c;
-    double belta  = (-y*x3+x1*y+x3*y1+y3*x-x1*y3-x*y1)*c;
-    double gamma = 1.0 - alpha - belta; 
+	float c = 1.0/(+x2*y3-x2*y1-x1*y3-x3*y2+x3*y1+x1*y2);
+    float alpha = (y*x3-y3*x+x*y2-x2*y+x2*y3-x3*y2)*c;
+    float belta  = (-y*x3+x1*y+x3*y1+y3*x-x1*y3-x*y1)*c;
+    float gamma = 1.0 - alpha - belta; 
 
 	X = alpha*X1 + belta*X2 + gamma*X3;
 	Y = alpha*Y1 + belta*Y2 + gamma*Y3;
@@ -605,7 +605,7 @@ void AAM_PAW::TextureToImage(IplImage* image, const CvMat* t)const
 	cvConvertScale(tt, tt, 255/(maxV-minV), -minV*255/(maxV-minV));
 
 	int k, x3;
-	double *T = tt->data.db;
+	float *T = tt->data.fl;
 	byte* p;
 
 	for(int y = 0; y < __height; y++)
@@ -638,16 +638,16 @@ void AAM_PAW::SaveWarpTextureToImage(const char* filename, const CvMat* t)const
 
 void AAM_PAW::CalcWarpTexture(const CvMat* s, const IplImage* image, CvMat* t)const
 {
-	double *fastt = t->data.db;
-	double *ss = s->data.db;
+	float *fastt = t->data.fl;
+	float *ss = s->data.fl;
 	int v1, v2, v3, tri_idx;
-	double x, y;
+	float x, y;
 	int X, Y, X1, Y1;
-	double s0 , t0, s1, t1;
+	float s0 , t0, s1, t1;
 	int ixB1, ixG1, ixR1, ixB2, ixG2, ixR2;
 	byte* p1, * p2;
 //	byte ltb, ltg, ltr, lbb, lbg, lbr, rtb, rtg, rtr, rbb, rbg, rbr;
-//	double b1 , b2, g1, g2 , r1, r2;
+//	float b1 , b2, g1, g2 , r1, r2;
 	char* imgdata = image->imageData;
 	int step = image->widthStep;
 	int nchannel = image->nChannels;
@@ -762,11 +762,11 @@ void AAM_PAW::Write(std::ofstream& os)
 
 	for(i = 0; i < __nPixels; i++)	os.write((char*)&__pixTri[i], sizeof(int));
 	
-	for(i = 0; i < __nPixels; i++)	os.write((char*)&__alpha[i], sizeof(double));
+	for(i = 0; i < __nPixels; i++)	os.write((char*)&__alpha[i], sizeof(float));
 
-	for(i = 0; i < __nPixels; i++)	os.write((char*)&__belta[i], sizeof(double));
+	for(i = 0; i < __nPixels; i++)	os.write((char*)&__belta[i], sizeof(float));
 
-	for(i = 0; i < __nPixels; i++)	os.write((char*)&__gamma[i], sizeof(double));
+	for(i = 0; i < __nPixels; i++)	os.write((char*)&__gamma[i], sizeof(float));
 
 	for(i = 0; i < __height; i++)
 	{
@@ -810,13 +810,13 @@ void AAM_PAW::Read(std::ifstream& is)
 	for(i = 0;  i < __nPixels; i++)	is.read((char*)&__pixTri[i], sizeof(int));
 	
 	__alpha.resize(__nPixels);
-	for(i = 0; i < __nPixels; i++)	is.read((char*)&__alpha[i], sizeof(double));
+	for(i = 0; i < __nPixels; i++)	is.read((char*)&__alpha[i], sizeof(float));
 
 	__belta.resize(__nPixels);
-	for(i = 0; i < __nPixels; i++)	is.read((char*)&__belta[i], sizeof(double));
+	for(i = 0; i < __nPixels; i++)	is.read((char*)&__belta[i], sizeof(float));
 	
 	__gamma.resize(__nPixels);
-	for(i = 0; i < __nPixels; i++)	is.read((char*)&__gamma[i], sizeof(double));
+	for(i = 0; i < __nPixels; i++)	is.read((char*)&__gamma[i], sizeof(float));
 	
 	__rect.resize(__height);
 	for(i = 0; i < __height; i++)

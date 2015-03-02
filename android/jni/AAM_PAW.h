@@ -53,9 +53,9 @@ public:
 	inline const int PixTri(int i)const{ return __pixTri[i];	}
 
 	// Coeffients of affine warp
-	inline const double Alpha(int i)const { return __alpha[i];	}
-	inline const double Belta(int i)const { return __belta[i];	}
-	inline const double Gamma(int i)const { return __gamma[i];	}
+	inline const float Alpha(int i)const { return __alpha[i];	}
+	inline const float Belta(int i)const { return __belta[i];	}
+	inline const float Gamma(int i)const { return __gamma[i];	}
 
 	// width and height boundary  
 	inline const int Width()const { return __width;	}
@@ -72,15 +72,15 @@ public:
 	void SaveWarpTextureToImage(const char* filename, const CvMat* t)const;
 	
 	// Calculate the warp parameters for a specific point according the piecewise
-	static void CalcWarpParameters(double x, double y, double x1, double y1,
-								double x2, double y2, double x3, double y3, 
-								double &alpha, double &belta, double &gamma);
+	static void CalcWarpParameters(float x, float y, float x1, float y1,
+								float x2, float y2, float x3, float y3, 
+								float &alpha, float &belta, float &gamma);
 
 	// Warp from source triangle to destination triangle
-	static void Warp(double x, double y, double x1, double y1,
-		double x2, double y2, double x3, double y3,
-		double& X, double& Y, double X1, double Y1,
-		double X2, double Y2, double X3, double Y3);
+	static void Warp(float x, float y, float x1, float y1,
+		float x2, float y2, float x3, float y3,
+		float& X, float& Y, float X1, float Y1,
+		float X2, float Y2, float X3, float Y3);
 
 private:
 	// Build triangles
@@ -112,7 +112,7 @@ private:
 	std::vector<std::vector<int> > __tri;	/*triangle vertexes index*/
 	std::vector<std::vector<int> > __vtri;	/*vertex vs triangle*/
 	std::vector<int>			   __pixTri;
-	std::vector<double>			   __alpha, __belta,  __gamma; 
+	std::vector<float> __alpha, __belta,  __gamma; 
 	std::vector<std::vector<int> > __rect; /*height by width */
 
 	AAM_Shape __referenceshape; 

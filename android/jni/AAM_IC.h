@@ -26,12 +26,12 @@ public:
 
 	// Build aam inverse compositional model
 	void Build(const file_lists& pts_files, const file_lists& img_files, 
-		double scale = 1.0)
+		float scale = 1.0)
 	{	Train(pts_files, img_files, scale); }
 
 	void Train(const file_lists& pts_files, const file_lists& img_files, 
-		double scale = 1.0, double shape_percentage = 0.975, 
-		double texture_percentage = 0.975);
+		float scale = 1.0, float shape_percentage = 0.975, 
+		float texture_percentage = 0.975);
 
 	void Draw(IplImage* image, const AAM_Shape& Shape, 
 		const AAM_Shape& RefShape, const IplImage* refImage = NULL, bool zero = true);

@@ -22,7 +22,7 @@ public:
 	
 	// Build shape distribution model
 	void Train(const std::vector<AAM_Shape> &AllShapes, 
-		double scale = 1.0, double percentage = 0.975);
+		float scale = 1.0, float percentage = 0.975);
 
 	// Read data from stream 
 	void Read(std::ifstream& is);
@@ -41,7 +41,7 @@ public:
 	void CalcParams(const CvMat* s, CvMat* pq);
 	
 	// Limit shape parameters.
-    void Clamp(CvMat* p, double s_d = 3.0);
+    void Clamp(CvMat* p, float s_d = 3.0);
 		
 	// Get number of points in shape model
 	inline const int nPoints()const{return __MeanShape->cols / 2;}
@@ -56,7 +56,7 @@ public:
 	// Get shape eigen-vectors of PCA (shape modes)
 	inline const CvMat* GetBases()const{ return __ShapesEigenVectors;	}
 
-	inline const double Var(int i)const{ return cvmGet(__ShapesEigenValues,0,i);	}
+	inline const float Var(int i)const{ return cvmGet(__ShapesEigenValues,0,i);	}
 
 private:
 	// Align shapes using procrustes analysis
@@ -67,7 +67,7 @@ private:
 							const std::vector<AAM_Shape> &AllShapes); 
 
 	// Do PCA of shape data
-	void DoPCA(const CvMat* AllShapes, double percentage);
+	void DoPCA(const CvMat* AllShapes, float percentage);
 
 private:
 

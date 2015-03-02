@@ -25,7 +25,7 @@ AAM_Shape& AAM_Shape::operator=(const AAM_Shape &s)
 }
 
 
-AAM_Shape& AAM_Shape::operator=(double value)
+AAM_Shape& AAM_Shape::operator=(float value)
 {
     for (int i = 0, size = m_vPoint.size(); i < size; i++)
     {
@@ -86,7 +86,7 @@ AAM_Shape& AAM_Shape::operator-=(const AAM_Shape &s)
 }
 
 
-AAM_Shape AAM_Shape::operator*(double value)const
+AAM_Shape AAM_Shape::operator*(float value)const
 {
 //	return AAM_Shape(*this) *= value;
 	
@@ -100,7 +100,7 @@ AAM_Shape AAM_Shape::operator*(double value)const
 }
 
 
-AAM_Shape& AAM_Shape::operator*=(double value)
+AAM_Shape& AAM_Shape::operator*=(float value)
 {
     for (int i = 0, size = m_vPoint.size(); i < size; i++)
 	{
@@ -111,9 +111,9 @@ AAM_Shape& AAM_Shape::operator*=(double value)
 }
 
 
-double AAM_Shape::operator*(const AAM_Shape &s)const
+float AAM_Shape::operator*(const AAM_Shape &s)const
 {
-    double result = 0.0;
+    float result = 0.0;
     for (int i = 0, size = m_vPoint.size(); i < size; i++)
 	{
         result += m_vPoint[i].x * s.m_vPoint[i].x +
@@ -123,7 +123,7 @@ double AAM_Shape::operator*(const AAM_Shape &s)const
 }
 
 
-AAM_Shape AAM_Shape::operator/(double value)const
+AAM_Shape AAM_Shape::operator/(float value)const
 {
  //   return AAM_Shape(*this) /= value;
 
@@ -139,7 +139,7 @@ AAM_Shape AAM_Shape::operator/(double value)const
 }
 
 
-AAM_Shape& AAM_Shape::operator/=(double value)
+AAM_Shape& AAM_Shape::operator/=(float value)
 {
     assert (value != 0);
 
@@ -151,7 +151,7 @@ AAM_Shape& AAM_Shape::operator/=(double value)
     return *this;
 }
 
-bool AAM_Shape::operator==(double value)
+bool AAM_Shape::operator==(float value)
 {
 	for (int i = 0, size = m_vPoint.size(); i < size; i++)
 	{
@@ -178,9 +178,9 @@ void AAM_Shape::CopyData(const AAM_Shape &s )
 //----------------------------------------------------------------------
 // Get Euclidean Norm of Shape
 //----------------------------------------------------------------------
-double AAM_Shape::GetNorm2()const
+float AAM_Shape::GetNorm2()const
 {
-    double norm = 0.0;
+    float norm = 0.0;
 
     // Normalize the vector to unit length, using the 2-norm.
     for(int i = 0, size = m_vPoint.size(); i < size; i++)
@@ -195,7 +195,7 @@ double AAM_Shape::GetNorm2()const
 //---------------------------------------------------------------------
 // Get the center of Shape
 //----------------------------------------------------------------------
-void AAM_Shape::COG(double &x, double &y)const
+void AAM_Shape::COG(float &x, float &y)const
 {
     x = y = 0.0;
 
@@ -214,7 +214,7 @@ void AAM_Shape::COG(double &x, double &y)const
 //----------------------------------------------------------------------
 void AAM_Shape::Centralize()
 {
-    double xSum, ySum;
+    float xSum, ySum;
 
 	COG(xSum, ySum);
 
@@ -225,7 +225,7 @@ void AAM_Shape::Centralize()
 //---------------------------------------------------------------------
 // Translate Shape using (x, y) 
 //----------------------------------------------------------------------
-void AAM_Shape::Translate(double x, double y)
+void AAM_Shape::Translate(float x, float y)
 {
     for(int i = 0, size = m_vPoint.size(); i < size; i++)
     {
@@ -237,7 +237,7 @@ void AAM_Shape::Translate(double x, double y)
 //---------------------------------------------------------------------
 // Scale Shape using s
 //----------------------------------------------------------------------
-void AAM_Shape::Scale(double s)
+void AAM_Shape::Scale(float s)
 {
     for(int i = 0, size = m_vPoint.size(); i < size; i++)
     {
@@ -249,7 +249,7 @@ void AAM_Shape::Scale(double s)
 //----------------------------------------------------------------------
 // Scale horizontal and vertical respectively
 //----------------------------------------------------------------------
-void AAM_Shape::ScaleXY(double sx, double sy)
+void AAM_Shape::ScaleXY(float sx, float sy)
 {
     for(int i = 0, size = m_vPoint.size(); i < size; i++)
     {
@@ -258,15 +258,15 @@ void AAM_Shape::ScaleXY(double sx, double sy)
     }
 }
 
-double AAM_Shape::Normalize()
+float AAM_Shape::Normalize()
 {
-    double x,y;
+    float x,y;
 
     COG(x, y);
 
     Translate( -x, -y );
 
-    double norm = GetNorm2();
+    float norm = GetNorm2();
 	norm = (norm < 1e-10) ? 1 : norm; 
 
     Scale( 1./norm );
@@ -277,9 +277,9 @@ double AAM_Shape::Normalize()
 //----------------------------------------------------------------------
 // Shape = (c00, c01; c10, c11) * Shape
 //----------------------------------------------------------------------
-void AAM_Shape::Transform(double c00, double c01, double c10, double c11)
+void AAM_Shape::Transform(float c00, float c01, float c10, float c11)
 {
-	double x, y;
+	float x, y;
 	for(int i = 0, size = m_vPoint.size(); i < size; i++)
     {
         x = m_vPoint[i].x;
@@ -293,13 +293,13 @@ void AAM_Shape::Transform(double c00, double c01, double c10, double c11)
 //----------------------------------------------------------------------
 // Rotate Shape as theta
 //----------------------------------------------------------------------
-void AAM_Shape::Rotate(double theta)
+void AAM_Shape::Rotate(float theta)
 {
     // set up transform matrix of rotation
-    double c00 =  cos( theta );
-    double c01 = -sin( theta );
-    double c10 =  sin( theta );
-    double c11 =  cos( theta );
+    float c00 =  cos( theta );
+    float c01 = -sin( theta );
+    float c10 =  sin( theta );
+    float c11 =  cos( theta );
 
 	Transform(c00, c01, c10, c11);   
 }
@@ -315,12 +315,12 @@ void AAM_Shape::Rotate(double theta)
 // Note BY YAO Wei: the Shape itself doesn't change
 // ---------------------------------------------------------------------------
 void AAM_Shape::AlignTransformation(const AAM_Shape &ref, 
-		double &a, double &b, double &tx, double &ty)const
+		float &a, float &b, float &tx, float &ty)const
 {
 
-	double X1 = 0, Y1 = 0, X2 = 0, Y2 = 0, Z = 0, C1 = 0, C2 = 0;
-	double W = m_vPoint.size();
-	double x1, y1, x2, y2;
+	float X1 = 0, Y1 = 0, X2 = 0, Y2 = 0, Z = 0, C1 = 0, C2 = 0;
+	float W = m_vPoint.size();
+	float x1, y1, x2, y2;
 	
 	for(int i = 0, size = m_vPoint.size(); i < size; i++)
     {
@@ -339,16 +339,16 @@ void AAM_Shape::AlignTransformation(const AAM_Shape &ref,
 	}
 	
 	{
-		double SolnA[] = {X2, -Y2, W, 0, Y2, X2, 0, W, Z, 0, X2, Y2, 0, Z, -Y2, X2};
-		CvMat A = cvMat(4, 4, CV_64FC1, SolnA);
-		double SolnB[] = {X1, Y1, C1, C2};
-		CvMat B = cvMat(4, 1, CV_64FC1, SolnB);
+		float SolnA[] = {X2, -Y2, W, 0, Y2, X2, 0, W, Z, 0, X2, Y2, 0, Z, -Y2, X2};
+		CvMat A = cvMat(4, 4, CV_32FC1, SolnA);
+		float SolnB[] = {X1, Y1, C1, C2};
+		CvMat B = cvMat(4, 1, CV_32FC1, SolnB);
 
-		static CvMat* Soln = cvCreateMat(4, 1, CV_64FC1);
+		static CvMat* Soln = cvCreateMat(4, 1, CV_32FC1);
 		cvSolve(&A, &B, Soln, CV_SVD);
 
-		a	= CV_MAT_ELEM(*Soln, double, 0, 0);  b	= CV_MAT_ELEM(*Soln, double, 1, 0);
-		tx	= CV_MAT_ELEM(*Soln, double, 2, 0);	 ty	= CV_MAT_ELEM(*Soln, double, 3, 0);
+		a	= CV_MAT_ELEM(*Soln, float, 0, 0);  b	= CV_MAT_ELEM(*Soln, float, 1, 0);
+		tx	= CV_MAT_ELEM(*Soln, float, 2, 0);	 ty	= CV_MAT_ELEM(*Soln, float, 3, 0);
 	}
 
 	// Explained by YAO Wei, 2008.01.29.
@@ -364,7 +364,7 @@ void AAM_Shape::AlignTransformation(const AAM_Shape &ref,
 //----------------------------------------------------------------------
 void AAM_Shape::AlignTo(const AAM_Shape &ref)
 {
-	double a, b, tx, ty;
+	float a, b, tx, ty;
 
 	AlignTransformation(ref, a, b, tx, ty);
 	
@@ -374,16 +374,16 @@ void AAM_Shape::AlignTo(const AAM_Shape &ref)
 //----------------------------------------------------------------------
 // Shape = (a, -b; b, a) * Shape + (tx, ty)
 //----------------------------------------------------------------------
-void AAM_Shape::TransformPose(double a, double b, double tx, double ty)
+void AAM_Shape::TransformPose(float a, float b, float tx, float ty)
 {
     Transform(a, -b, b, a);
 	
 	Translate( tx, ty );
 }
 
-const double AAM_Shape::MinX()const
+const float AAM_Shape::MinX()const
 {	
-    double val, min = 1.7E+308;
+    float val, min = 3.4E+38;
 
     for(int i = 0, size = m_vPoint.size(); i < size; i++)
     {	
@@ -393,9 +393,9 @@ const double AAM_Shape::MinX()const
     return min;
 }
 
-const double AAM_Shape::MinY()const
+const float AAM_Shape::MinY()const
 {	
-    double val, min = 1.7E+308;
+    float val, min = 3.4E+38;
     for(int i = 0, size = m_vPoint.size(); i < size; i++)
     {	
         val = m_vPoint[i].y;
@@ -405,9 +405,9 @@ const double AAM_Shape::MinY()const
 }
 
 
-const double AAM_Shape::MaxX()const
+const float AAM_Shape::MaxX()const
 {	
-    double val, max = -1.7E+308;
+    float val, max = -3.4E+38;
     for(int i = 0, size = m_vPoint.size(); i < size; i++)
     {
         val = m_vPoint[i].x;
@@ -417,9 +417,9 @@ const double AAM_Shape::MaxX()const
 }
 
 
-const double AAM_Shape::MaxY()const
+const float AAM_Shape::MaxY()const
 {	
-    double val, max = -1.7E+308;
+    float val, max = -3.4E+38;
     for(int i = 0, size = m_vPoint.size(); i < size; i++)
     {
         val = m_vPoint[i].y;
@@ -431,7 +431,7 @@ const double AAM_Shape::MaxY()const
 void AAM_Shape::Mat2Point(const CvMat* res)
 {
     int nPoints = res->cols / 2;
-	double *B = (double*)(res->data.ptr+res->step*0);
+	float *B = (float*)(res->data.ptr+res->step*0);
 	if(m_vPoint.size() != nPoints)		resize(nPoints);
 	for (int i = 0; i < nPoints ; i++)
     {
@@ -443,7 +443,7 @@ void AAM_Shape::Mat2Point(const CvMat* res)
 void AAM_Shape::Point2Mat(CvMat* res)const
 {
 	int nPoints = res->cols / 2;
-	double *B = (double*)(res->data.ptr+res->step*0);
+	float *B = (float*)(res->data.ptr+res->step*0);
 	for (int i = 0; i < nPoints ; i++)
     {
         B[2*i] = m_vPoint[i].x;

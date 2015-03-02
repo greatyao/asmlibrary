@@ -27,12 +27,12 @@ AAM_PDM::~AAM_PDM()
 
 //============================================================================
 void AAM_PDM::Train(const std::vector<AAM_Shape> &AllShapes, 
-					double scale /* = 1.0 */,
-					double percentage /* = 0.975 */)
+					float scale /* = 1.0 */,
+					float percentage /* = 0.975 */)
 {
 	int nSamples = AllShapes.size();
 	int nPoints = AllShapes[0].NPoints();
-	__matshape = cvCreateMat(1, nPoints*2, CV_64FC1);
+	__matshape = cvCreateMat(1, nPoints*2, CV_32FC1);
 
 	std::vector<AAM_Shape> AlignedShapes = AllShapes;
 	for(int s = 0; s < AlignedShapes.size(); s++)
@@ -41,13 +41,13 @@ void AAM_PDM::Train(const std::vector<AAM_Shape> &AllShapes,
 	AAM_PDM::AlignShapes(AlignedShapes);
 
 	// Assign all points positions from vector<AAM_Shape> to CvMat
-	CvMat *m_CVShapes = cvCreateMat (nSamples, nPoints * 2, CV_64FC1);
+	CvMat *m_CVShapes = cvCreateMat (nSamples, nPoints * 2, CV_32FC1);
     for(int i = 0; i < nSamples; i++)
     {
 		for(int j = 0; j < nPoints; j++)
         {
-            CV_MAT_ELEM(*m_CVShapes, double, i, 2*j  ) = AlignedShapes[i][j].x;
-            CV_MAT_ELEM(*m_CVShapes, double, i, 2*j+1) = AlignedShapes[i][j].y;        }
+            CV_MAT_ELEM(*m_CVShapes, float, i, 2*j  ) = AlignedShapes[i][j].x;
+            CV_MAT_ELEM(*m_CVShapes, float, i, 2*j+1) = AlignedShapes[i][j].y;        }
     }
 
 	DoPCA(m_CVShapes, percentage);
@@ -79,7 +79,7 @@ void AAM_PDM::AlignShapes(std::vector<AAM_Shape> &AllShapes)
 	AAM_Shape NewMeanShape(meanShape);
 	
     // do a number of alignment iterations until the mean shape estimate is stable
-    double diff, diff_max = 0.0001;
+    float diff, diff_max = 0.0001;
 	const int max_iter = 30;
     for(int iter = 0; iter < max_iter; iter++)
     {
@@ -120,7 +120,7 @@ void AAM_PDM::CalcMeanShape(AAM_Shape &MeanShape,
 }
 
 //============================================================================
-void AAM_PDM::DoPCA(const CvMat* AllShapes, double percentage)
+void AAM_PDM::DoPCA(const CvMat* AllShapes, float percentage)
 {
 	LOGD("Doing PCA of shapes datas...");
 
@@ -128,28 +128,28 @@ void AAM_PDM::DoPCA(const CvMat* AllShapes, double percentage)
 	int nPointsby2 = AllShapes->cols;
     int nEigenAtMost = MIN(nSamples, nPointsby2);
 
-    CvMat* tmpEigenValues = cvCreateMat(1, nEigenAtMost, CV_64FC1);
-    CvMat* tmpEigenVectors = cvCreateMat(nEigenAtMost, nPointsby2, CV_64FC1);
-    __MeanShape = cvCreateMat(1, nPointsby2, CV_64FC1 );
+    CvMat* tmpEigenValues = cvCreateMat(1, nEigenAtMost, CV_32FC1);
+    CvMat* tmpEigenVectors = cvCreateMat(nEigenAtMost, nPointsby2, CV_32FC1);
+    __MeanShape = cvCreateMat(1, nPointsby2, CV_32FC1 );
 
     cvCalcPCA(AllShapes, __MeanShape, 
         tmpEigenValues, tmpEigenVectors, CV_PCA_DATA_AS_ROW);
 
-	double allSum = cvSum(tmpEigenValues).val[0];
-	double partSum = 0.0;
+	float allSum = cvSum(tmpEigenValues).val[0];
+	float partSum = 0.0;
     int nTruncated = 0;
-    double largesteigval = cvmGet(tmpEigenValues, 0, 0);
+    float largesteigval = cvmGet(tmpEigenValues, 0, 0);
 	for(int i = 0; i < nEigenAtMost; i++)
     {
-		double thiseigval = cvmGet(tmpEigenValues, 0, i);
+		float thiseigval = cvmGet(tmpEigenValues, 0, i);
         if(thiseigval / largesteigval < 0.0001) break; // firstly check
 		partSum += thiseigval;
 		++ nTruncated;
         if(partSum/allSum >= percentage)	break;    //secondly check
     }
 
-	__ShapesEigenValues = cvCreateMat(1, nTruncated, CV_64FC1);
-	__ShapesEigenVectors = cvCreateMat(nTruncated, nPointsby2, CV_64FC1);
+	__ShapesEigenValues = cvCreateMat(1, nTruncated, CV_32FC1);
+	__ShapesEigenVectors = cvCreateMat(nTruncated, nPointsby2, CV_32FC1);
     
 	CvMat G;
 	cvGetCols(tmpEigenValues, &G, 0, nTruncated);
@@ -171,10 +171,10 @@ void AAM_PDM::CalcLocalShape(const CvMat* p, CvMat* s)
 void AAM_PDM::CalcGlobalShape(const CvMat* q, CvMat* s)
 {
 	int npoints = nPoints();
-	double* fasts = s->data.db;
-	double a=cvmGet(q,0,0)+1, b=cvmGet(q,0,1), 
+	float* fasts = s->data.fl;
+	float a=cvmGet(q,0,0)+1, b=cvmGet(q,0,1), 
 		tx=cvmGet(q,0,2), ty=cvmGet(q,0,3);
-	double x, y;
+	float x, y;
 	for(int i = 0; i < npoints; i++)
 	{
 		x = fasts[2*i  ];
@@ -212,9 +212,9 @@ void AAM_PDM::CalcParams(const CvMat* s, CvMat* p, CvMat* q)
 {
 	int nmodes = nModes(), npoints = nPoints();
 	
-	double a, b, tx, ty;
-	double a_, b_, tx_, ty_;
-	double norm;
+	float a, b, tx, ty;
+	float a_, b_, tx_, ty_;
+	float norm;
 	
 	__y.Mat2Point(s);
 	__y.COG(tx, ty);
@@ -246,12 +246,12 @@ void AAM_PDM::CalcParams(const CvMat* s, CvMat* p, CvMat* q)
 	Clamp(p, 1.8);
 }
 
-void AAM_PDM::Clamp(CvMat* p, double s_d /* = 3.0 */)
+void AAM_PDM::Clamp(CvMat* p, float s_d /* = 3.0 */)
 {
-	double* fastp = p->data.db;
-	double* fastv = __ShapesEigenValues->data.db;
+	float* fastp = p->data.fl;
+	float* fastv = __ShapesEigenValues->data.fl;
 	int nmodes = nModes();
-	double limit;
+	float limit;
 
 	for(int i = 0; i < nmodes; i++)
 	{
@@ -280,9 +280,9 @@ void AAM_PDM::Read(std::ifstream& is)
 	is.read((char*)&_nPoints, sizeof(_nPoints));
 	is.read((char*)&_nModes, sizeof(_nModes));
 
-	__MeanShape = cvCreateMat(1, _nPoints*2, CV_64FC1);
-	__ShapesEigenValues = cvCreateMat(1, _nModes, CV_64FC1);
-	__ShapesEigenVectors = cvCreateMat(_nModes, _nPoints*2, CV_64FC1);
+	__MeanShape = cvCreateMat(1, _nPoints*2, CV_32FC1);
+	__ShapesEigenValues = cvCreateMat(1, _nModes, CV_32FC1);
+	__ShapesEigenVectors = cvCreateMat(_nModes, _nPoints*2, CV_32FC1);
 	__AAMRefShape.resize(_nPoints);
 
 	ReadCvMat(is, __MeanShape); 
@@ -290,5 +290,5 @@ void AAM_PDM::Read(std::ifstream& is)
 	ReadCvMat(is, __ShapesEigenVectors);
 	__AAMRefShape.Read(is);
 
-	__matshape  = cvCreateMat(1, nPoints()*2, CV_64FC1);
+	__matshape  = cvCreateMat(1, nPoints()*2, CV_32FC1);
 }

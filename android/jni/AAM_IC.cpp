@@ -31,9 +31,9 @@ AAM_IC::~AAM_IC()
 //============================================================================
 void AAM_IC::Train(const file_lists& pts_files, 
 				   const file_lists& img_files, 
-				   double scale /* = 1.0 */, 
-				   double shape_percentage /* = 0.975 */, 
-				   double texture_percentage /* = 0.975 */)
+				   float scale /* = 1.0 */, 
+				   float shape_percentage /* = 0.975 */, 
+				   float texture_percentage /* = 0.975 */)
 {
 	if(pts_files.size() != img_files.size())
 	{
@@ -66,7 +66,7 @@ void AAM_IC::Train(const file_lists& pts_files,
 	__Points = cvCreateMat (1, __shape.nPoints(), CV_32FC2);
 	__Storage = cvCreateMemStorage(0);
 
-	double sp = 1.0;
+	float sp = 1.0;
 	//if(__shape.GetMeanShape().GetWidth() > 150)
 	//	sp = 150/__shape.GetMeanShape().GetWidth();
 
@@ -78,8 +78,8 @@ void AAM_IC::Train(const file_lists& pts_files,
 	__texture.Train(pts_files, img_files, __paw, texture_percentage, true);
 
 	//alocate memory for on-line fitting stuff
-	__warp_t = cvCreateMat(1, __texture.nPixels(), CV_64FC1);
-	__current_s = cvCreateMat(1, __shape.nPoints()*2, CV_64FC1);
+	__warp_t = cvCreateMat(1, __texture.nPixels(), CV_32FC1);
+	__current_s = cvCreateMat(1, __shape.nPoints()*2, CV_32FC1);
 
 	LOGD("################################################\n\n");
 }
@@ -137,8 +137,8 @@ void AAM_IC::Read(std::ifstream& is)
 	__Points = cvCreateMat (1, __shape.nPoints(), CV_32FC2);
 	__Storage = cvCreateMemStorage(0);
 
-	__warp_t = cvCreateMat(1, __texture.nPixels(), CV_64FC1);
-	__current_s = cvCreateMat(1, __shape.nPoints()*2, CV_64FC1);
+	__warp_t = cvCreateMat(1, __texture.nPixels(), CV_32FC1);
+	__current_s = cvCreateMat(1, __shape.nPoints()*2, CV_32FC1);
 }
 
 //============================================================================

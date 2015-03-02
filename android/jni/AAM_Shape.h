@@ -39,17 +39,17 @@ public:
 
     // operators
     AAM_Shape&    operator=(const AAM_Shape &s);
-    AAM_Shape&    operator=(double value);
+    AAM_Shape&    operator=(float value);
     AAM_Shape     operator+(const AAM_Shape &s)const;
     AAM_Shape&    operator+=(const AAM_Shape &s);
     AAM_Shape     operator-(const AAM_Shape &s)const;
     AAM_Shape&    operator-=(const AAM_Shape &s);
-    AAM_Shape     operator*(double value)const;
-    AAM_Shape&    operator*=(double value);
-    double        operator*(const AAM_Shape &s)const;
-    AAM_Shape     operator/(double value)const;
-    AAM_Shape&    operator/=(double value);
-	bool		  operator==(double value);
+    AAM_Shape     operator*(float value)const;
+    AAM_Shape&    operator*=(float value);
+    float        operator*(const AAM_Shape &s)const;
+    AAM_Shape     operator/(float value)const;
+    AAM_Shape&    operator/=(float value);
+	bool		  operator==(float value);
 
     void    clear(){ resize(0); }
     void    resize(int length){ m_vPoint.resize(length); }
@@ -60,37 +60,37 @@ public:
 	void    ReadASF(const std::string &filename);
 	void	ReadPTS(const std::string &filename);
 
-	const double  MinX()const;
-    const double  MinY()const;
-    const double  MaxX()const;
-    const double  MaxY()const;
-    inline const double  GetWidth()const{  return MaxX()-MinX();    }
-	inline const double  GetHeight()const{ return MaxY()-MinY();	}
+	const float  MinX()const;
+    const float  MinY()const;
+    const float  MaxX()const;
+    const float  MaxY()const;
+    inline const float  GetWidth()const{  return MaxX()-MinX();    }
+	inline const float  GetHeight()const{ return MaxY()-MinY();	}
 	
     // Transformations
-    void    COG(double &x, double &y)const;
+    void    COG(float &x, float &y)const;
     void    Centralize();
-    void    Translate(double x, double y);
-    void    Scale(double s);
-    void    Rotate(double theta);
-	void    ScaleXY(double sx, double sy);
-	double	Normalize();
+    void    Translate(float x, float y);
+    void    Scale(float s);
+    void    Rotate(float theta);
+	void    ScaleXY(float sx, float sy);
+	float	Normalize();
 	
 	// Align the shapes to reference shape 
 	//													[a -b Tx]
 	// returns the similarity transform: T(a,b,tx,ty) = [b  a Ty]
 	//													[0  0  1]
 	void    AlignTransformation(const AAM_Shape &ref, 
-			double &a, double &b, double &tx, double &ty)const;
+			float &a, float &b, float &tx, float &ty)const;
     
 	// Align the shapes to reference shape as above, but no returns
     void    AlignTo(const AAM_Shape &ref);
     
 	// Transform Shape using similarity transform T(a,b,tx,ty)
-	void    TransformPose(double a, double b, double tx, double ty);
+	void    TransformPose(float a, float b, float tx, float ty);
 
 	// Euclidean norm
-	double  GetNorm2()const;
+	float  GetNorm2()const;
 
 	// conversion between CvMat and AAM_Shape
 	void    Mat2Point(const CvMat* res);
@@ -98,7 +98,7 @@ public:
 
 private:
 	void    CopyData(const AAM_Shape &s);
-	void    Transform(double c00, double c01, double c10, double c11);
+	void    Transform(float c00, float c01, float c10, float c11);
 
 };
 

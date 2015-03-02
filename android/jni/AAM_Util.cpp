@@ -16,17 +16,17 @@ using namespace std;
 //============================================================================
 void ReadCvMat(std::istream &is, CvMat* mat)
 {
-	assert(CV_MAT_TYPE(mat->type) == CV_64FC1);
-	double* p = mat->data.db;
-	is.read((char*)p, mat->rows*mat->cols*sizeof(double));
+	assert(CV_MAT_TYPE(mat->type) == CV_32FC1);
+	float* p = mat->data.fl;
+	is.read((char*)p, mat->rows*mat->cols*sizeof(float));
 }
 
 //============================================================================
 void WriteCvMat(std::ostream &os, const CvMat* mat)
 {
-	assert(CV_MAT_TYPE(mat->type) == CV_64FC1);
-	double* p = mat->data.db;
-	os.write((char*)p, mat->rows*mat->cols*sizeof(double));
+	assert(CV_MAT_TYPE(mat->type) == CV_32FC1);
+	float* p = mat->data.fl;
+	os.write((char*)p, mat->rows*mat->cols*sizeof(float));
 }
 
 //============================================================================
@@ -184,10 +184,10 @@ static void DrawAppearanceRGBAChannel(const AAM_Shape& refShape,
 									const std::vector<std::vector<int> >& rect1,
 									const std::vector<std::vector<int> >& rect2,
 									const std::vector<int>& pixTri,
-									const std::vector<double>& alpha,
-									const std::vector<double>& belta,
-									const std::vector<double>& gamma,
-									const double* fastt, const AAM_Shape& Shape, IplImage* image)
+									const std::vector<float>& alpha,
+									const std::vector<float>& belta,
+									const std::vector<float>& gamma,
+									const float* fastt, const AAM_Shape& Shape, IplImage* image)
 {
 	int x1, x2, y1, y2, idx1, idx2;
 	int xby4, idxby3;
@@ -195,13 +195,10 @@ static void DrawAppearanceRGBAChannel(const AAM_Shape& refShape,
 	int tri_idx, v1, v2, v3;
 	byte *pimg, *pimg2;
 	int nPoints = Shape.NPoints();
-	double alpha0, belta0, gamma0;
+	float alpha0, belta0, gamma0;
 	
 	minx = Shape.MinX(); miny = Shape.MinY();
 	maxx = Shape.MaxX(); maxy = Shape.MaxY();
-	if(maxx-minx <= 2 || maxy-miny <= 2) 
-		return;
-
 	for(int y = miny; y < maxy; y++)
 	{
 		y1 = y-miny;
@@ -255,10 +252,10 @@ static void DrawAppearanceRGBChannel(const AAM_Shape& refShape,
 									const std::vector<std::vector<int> >& rect1,
 									const std::vector<std::vector<int> >& rect2,
 									const std::vector<int>& pixTri,
-									const std::vector<double>& alpha,
-									const std::vector<double>& belta,
-									const std::vector<double>& gamma,
-									const double* fastt, const AAM_Shape& Shape, IplImage* image)
+									const std::vector<float>& alpha,
+									const std::vector<float>& belta,
+									const std::vector<float>& gamma,
+									const float* fastt, const AAM_Shape& Shape, IplImage* image)
 {
 	int x1, x2, y1, y2, idx1, idx2;
 	int xby3, idxby3;
@@ -336,7 +333,7 @@ void* AAM_Common::ThreadDrawAppearance(void* p)
 	int minx, miny, maxx, maxy;
 	int tri_idx, v1, v2, v3;
 	byte* pimg;
-	double* fastt = t->data.db;
+	float* fastt = t->data.fl;
 	int nChannel = image->nChannels;
 	int nPoints = Shape.NPoints();
 	const AAM_Shape& refShape = refpaw->__referenceshape;
@@ -344,9 +341,9 @@ void* AAM_Common::ThreadDrawAppearance(void* p)
 	const std::vector<std::vector<int> >& rect1 = paw->__rect;
 	const std::vector<std::vector<int> >& rect2 = refpaw->__rect;
 	const std::vector<int>& pixTri = paw->__pixTri;
-	const std::vector<double>& alpha = paw->__alpha;
-	const std::vector<double>& belta= paw->__belta;
-	const std::vector<double>& gamma = paw->__gamma;
+	const std::vector<float>& alpha = paw->__alpha;
+	const std::vector<float>& belta= paw->__belta;
+	const std::vector<float>& gamma = paw->__gamma;
 	int stepx = 1;
 
 	minx = Shape.MinX(); miny = Shape.MinY();
@@ -357,6 +354,7 @@ void* AAM_Common::ThreadDrawAppearance(void* p)
 	{
 		if(oddx == 1) minx = minx/2*2+1;
 		else	      minx = (minx+1)/2*2;
+		stepx = 2;
 	}
 
 	for(int y = miny; y < maxy; y+=2)
@@ -448,7 +446,7 @@ void AAM_Common::DrawAppearance(IplImage*image, const AAM_Shape& Shape,
 	int minx, miny, maxx, maxy;
 	int tri_idx, v1, v2, v3;
 	byte* pimg;
-	double* fastt = t->data.db;
+	float* fastt = t->data.fl;
 	int nChannel = image->nChannels;
 	int nPoints = Shape.NPoints();
 	const AAM_Shape& refShape = refpaw.__referenceshape;
@@ -456,9 +454,9 @@ void AAM_Common::DrawAppearance(IplImage*image, const AAM_Shape& Shape,
 	const std::vector<std::vector<int> >& rect1 = paw.__rect;
 	const std::vector<std::vector<int> >& rect2 = refpaw.__rect;
 	const std::vector<int>& pixTri = paw.__pixTri;
-	const std::vector<double>& alpha = paw.__alpha;
-	const std::vector<double>& belta= paw.__belta;
-	const std::vector<double>& gamma = paw.__gamma;
+	const std::vector<float>& alpha = paw.__alpha;
+	const std::vector<float>& belta= paw.__belta;
+	const std::vector<float>& gamma = paw.__gamma;
 
 	if(nChannel == 4)
 	{
@@ -526,7 +524,7 @@ void AAM_Common::DrawAppearance(IplImage*image, const AAM_Shape& Shape,
 //===========================================================================
 void AAM_Common::CheckShape(CvMat* s, int w, int h)
 {
-	double* fasts = s->data.db;
+	float* fasts = s->data.fl;
 	int npoints = s->cols / 2;
 
 	for(int i = 0; i < npoints; i++)

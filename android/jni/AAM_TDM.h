@@ -23,7 +23,7 @@ public:
 
 	//build texture distribution model
 	void Train(const file_lists& pts_files, const file_lists& img_files,
-		const AAM_PAW& m_warp, double texture_percentage = 0.975, 
+		const AAM_PAW& m_warp, float texture_percentage = 0.975, 
 		bool registration  = true);
 
 	// Read data from stream 
@@ -39,7 +39,7 @@ public:
 	void CalcParams(const CvMat* t, CvMat* lamda);
 
 	//Limit texture parameters.
-    void Clamp(CvMat* lamda, double s_d = 3.0);
+    void Clamp(CvMat* lamda, float s_d = 3.0);
 
 	// Normalize texture make sure: sum of element is o and variance is 1 
 	static void ZeroMeanUnitLength(CvMat* Texture);
@@ -59,12 +59,12 @@ public:
 	// Get texture eigen-vectors of PCA (modes modes)
 	inline const CvMat* GetBases()const{ return __TextureEigenVectors;	}
 
-	inline const double Var(int i)const{ return cvmGet(__TextureEigenValues,0,i); }
+	inline const float Var(int i)const{ return cvmGet(__TextureEigenValues,0,i); }
 
 private:
 
 	// Do pca of texture data
-	void DoPCA(const CvMat* AllTextures, double percentage);
+	void DoPCA(const CvMat* AllTextures, float percentage);
 
 	// Align texture to lossen the affect of light variations
 	static void AlignTextures(CvMat* AllTextures);
