@@ -47,7 +47,9 @@ Nanjing University</EM>, Feb 2009. \url http://code.google.com/p/asmlibrary
 using namespace std;
 typedef vector<string> filelists;
 
-#ifndef WIN32
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
