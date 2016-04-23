@@ -12,6 +12,10 @@
 - Linux/MacOSX
 
     Goto linux/macosx directory and type make command.
+	
+- Android
+
+    Redirect to repo [asmlibrary-android] (https://github.com/greatyao/asmlibrary-android)
 
 ## Quick Tutorial
 
