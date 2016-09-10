@@ -46,9 +46,7 @@ Nanjing University</EM>, Feb 2009. \url http://code.google.com/p/asmlibrary
 
 using namespace std;
 
-#ifdef WIN32
 #define HAS_GSTREAMER
-#endif
 
 static void print_version()
 {
