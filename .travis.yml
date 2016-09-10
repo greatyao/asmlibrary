@@ -1,0 +1,15 @@
+sudo: required
+dist: trusty
+language: cpp
+cache: apt
+
+branches:
+  only:
+    - 'master'
+
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get -qq install pkg-config libopencv-dev
+
+script:
+  - cd linux && make
