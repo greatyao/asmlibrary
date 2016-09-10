@@ -15,5 +15,6 @@ script:
   - cd linux && make
 
 after_success:  
-  - ./example/fit -m ./example/my68-1d.amf -h ./example/haarcascade_frontalface_alt2.xml -i ./example/multipeople.jpg 
-  - ./example/fit -m ./example/my68-1d.amf -h ./example/haarcascade_frontalface_alt2.xml -v ./example/seq1.avi -n 24
+  - pwd
+  - ./linux/fit -m ./example/my68-1d.amf -h ./example/haarcascade_frontalface_alt2.xml -i ./example/multipeople.jpg 
+  - ./linux/fit -m ./example/my68-1d.amf -h ./example/haarcascade_frontalface_alt2.xml -v ./example/seq1.avi -n 24
