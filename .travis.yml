@@ -14,7 +14,6 @@ before_install:
 script:
   - cd linux && make
 
-after_success:  
-  - pwd
-  - ./linux/fit -m ./example/my68-1d.amf -h ./example/haarcascade_frontalface_alt2.xml -i ./example/multipeople.jpg 
-  - ./linux/fit -m ./example/my68-1d.amf -h ./example/haarcascade_frontalface_alt2.xml -v ./example/seq1.avi -n 24
+after_success:
+  - ./fit -m ../example/my68-1d.amf -h ../example/haarcascade_frontalface_alt2.xml -i ../example/multipeople.jpg 
+  - ./fit -m ../example/my68-1d.amf -h ../example/haarcascade_frontalface_alt2.xml -v ../example/seq1.avi -n 24
