@@ -1,4 +1,4 @@
-# Avtive Shape Model C++ Library (ASMLibrary)
+# Active Shape Model C++ Library (ASMLibrary)
 
 
 ## Dependencies
